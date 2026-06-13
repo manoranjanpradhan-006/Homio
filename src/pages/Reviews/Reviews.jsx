@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ThumbsUp, ThumbsDown, Star, Plus, X, ChevronDown } from 'lucide-react';
 import { getNeighborhoodById, getNeighborhoods, getReviews, addReview } from '../../services/dataService';
 import Footer from '../../components/Footer/Footer';
+import CustomSelect from '../../components/CustomSelect/CustomSelect';
 import './Reviews.css';
 
 export default function Reviews() {
@@ -20,6 +21,7 @@ export default function Reviews() {
   const [newRating, setNewRating] = useState(5);
   const [hoverRating, setHoverRating] = useState(0);
   const [helpful, setHelpful] = useState({});
+  const [selectedNeighborhoodName, setSelectedNeighborhoodName] = useState('');
 
   useEffect(() => {
     const loadReviewsData = async () => {
@@ -32,6 +34,14 @@ export default function Reviews() {
       setNeighborhood(nData);
       setAllNeighborhoods(listData);
       setNeighborhoodReviews(rData || []);
+      
+      // Default select options to current active neighborhood
+      if (nData) {
+        setSelectedNeighborhoodName(`${nData.name}, ${nData.city}`);
+      } else if (listData && listData.length > 0) {
+        setSelectedNeighborhoodName(`${listData[0].name}, ${listData[0].city}`);
+      }
+
       setLoading(false);
     };
     loadReviewsData();
@@ -277,15 +287,16 @@ export default function Reviews() {
               </div>
 
               <form onSubmit={handleReviewSubmit} className="arm-body">
-                <div className="form-group">
-                  <label className="label">Neighborhood</label>
-                  <div className="select-wrap">
-                    <select className="select" name="neighborhoodName">
-                      {allNeighborhoods.map(n => <option key={n.id}>{n.name}, {n.city}</option>)}
-                    </select>
-                    <ChevronDown size={14} className="select-icon" />
-                  </div>
-                </div>
+                 <div className="form-group">
+                   <label className="label">Neighborhood</label>
+                   <CustomSelect
+                     name="neighborhoodName"
+                     value={selectedNeighborhoodName}
+                     onChange={(e) => setSelectedNeighborhoodName(e.target.value)}
+                     options={allNeighborhoods.map(n => `${n.name}, ${n.city}`)}
+                     required
+                   />
+                 </div>
 
                 <div className="form-group">
                   <label className="label">Your Rating</label>

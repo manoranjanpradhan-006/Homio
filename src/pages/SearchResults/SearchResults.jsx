@@ -4,6 +4,7 @@ import { SlidersHorizontal, X, ChevronDown, ArrowUpDown, ChevronLeft, ChevronRig
 import { getProperties } from '../../services/dataService';
 import PropertyCard from '../../components/PropertyCard/PropertyCard';
 import Footer from '../../components/Footer/Footer';
+import CustomSelect from '../../components/CustomSelect/CustomSelect';
 import './SearchResults.css';
 
 const PER_PAGE = 6;
@@ -85,16 +86,17 @@ export default function SearchResults() {
       {/* Neighborhood */}
       <div className="filter-group">
         <label className="label">Neighborhood</label>
-        <div className="select-wrap">
-          <select className="select" value={filters.neighborhood} onChange={e => setFilter('neighborhood', e.target.value)}>
-            <option value="All">All Areas</option>
-            <option value="Patia">Patia</option>
-            <option value="Khandagiri">Khandagiri</option>
-            <option value="Chandrasekharpur">Chandrasekharpur</option>
-            <option value="Nayapalli">Nayapalli</option>
-          </select>
-          <ChevronDown size={14} className="select-icon" />
-        </div>
+        <CustomSelect
+          value={filters.neighborhood}
+          onChange={e => setFilter('neighborhood', e.target.value)}
+          options={[
+            { value: 'All', label: 'All Areas' },
+            { value: 'Patia', label: 'Patia' },
+            { value: 'Khandagiri', label: 'Khandagiri' },
+            { value: 'Chandrasekharpur', label: 'Chandrasekharpur' },
+            { value: 'Nayapalli', label: 'Nayapalli' }
+          ]}
+        />
       </div>
 
       {/* Bedrooms */}
@@ -111,30 +113,32 @@ export default function SearchResults() {
       {/* Property Type */}
       <div className="filter-group">
         <label className="label">Property Type</label>
-        <div className="select-wrap">
-          <select className="select" value={filters.propType} onChange={e => setFilter('propType', e.target.value)}>
-            <option value="Any">Any</option>
-            <option value="Apartment">Apartment</option>
-            <option value="Villa">Villa</option>
-            <option value="Independent Floor">Independent Floor</option>
-            <option value="Studio">Studio</option>
-          </select>
-          <ChevronDown size={14} className="select-icon" />
-        </div>
+        <CustomSelect
+          value={filters.propType}
+          onChange={e => setFilter('propType', e.target.value)}
+          options={[
+            { value: 'Any', label: 'Any' },
+            { value: 'Apartment', label: 'Apartment' },
+            { value: 'Villa', label: 'Villa' },
+            { value: 'Independent Floor', label: 'Independent Floor' },
+            { value: 'Studio', label: 'Studio' }
+          ]}
+        />
       </div>
 
       {/* Furnishing */}
       <div className="filter-group">
         <label className="label">Furnishing</label>
-        <div className="select-wrap">
-          <select className="select" value={filters.furnishing} onChange={e => setFilter('furnishing', e.target.value)}>
-            <option value="Any">Any</option>
-            <option value="Fully">Fully Furnished</option>
-            <option value="Semi">Semi Furnished</option>
-            <option value="Unfurnished">Unfurnished</option>
-          </select>
-          <ChevronDown size={14} className="select-icon" />
-        </div>
+        <CustomSelect
+          value={filters.furnishing}
+          onChange={e => setFilter('furnishing', e.target.value)}
+          options={[
+            { value: 'Any', label: 'Any' },
+            { value: 'Fully', label: 'Fully Furnished' },
+            { value: 'Semi', label: 'Semi Furnished' },
+            { value: 'Unfurnished', label: 'Unfurnished' }
+          ]}
+        />
       </div>
 
       <button className="btn btn-primary w-full" style={{ width: '100%' }} onClick={() => setPage(1)}>
@@ -181,12 +185,17 @@ export default function SearchResults() {
             <h1 className="search-count">{filtered.length} Homes Found</h1>
             <div className="sort-wrap">
               <ArrowUpDown size={15} />
-              <select className="select sort-select" value={sort} onChange={e => setSort(e.target.value)}>
-                <option value="score">Best Score</option>
-                <option value="priceAsc">Lowest Price</option>
-                <option value="priceDesc">Highest Price</option>
-                <option value="newest">Newest</option>
-              </select>
+              <CustomSelect
+                value={sort}
+                onChange={e => setSort(e.target.value)}
+                options={[
+                  { value: 'score', label: 'Best Score' },
+                  { value: 'priceAsc', label: 'Lowest Price' },
+                  { value: 'priceDesc', label: 'Highest Price' },
+                  { value: 'newest', label: 'Newest' }
+                ]}
+                className="sort-custom-select"
+              />
             </div>
           </div>
 

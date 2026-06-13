@@ -195,18 +195,35 @@ export default function Navbar() {
                 <button className="btn-icon" onClick={() => setSearchOpen(false)}><X size={18} /></button>
               </div>
 
-              {suggestions.length > 0 && (
-                <ul className="search-suggestions">
-                  {suggestions.map((s, i) => (
-                    <li key={i} className="suggestion-item" onClick={() => handleSuggestionClick(s)}>
-                      {s.type === 'neighborhood'
-                        ? <><MapPin size={14} className="suggestion-icon" /><span>{s.label}</span><span className="suggestion-score">{s.score}/10</span></>
-                        : <><Home size={14} className="suggestion-icon" /><div><span>{s.label}</span><small>{s.sub}</small></div></>
-                      }
-                    </li>
-                  ))}
-                </ul>
-              )}
+              <AnimatePresence>
+                {suggestions.length > 0 && (
+                  <motion.ul 
+                    className="search-suggestions"
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    style={{ overflow: 'hidden' }}
+                  >
+                    {suggestions.map((s, i) => (
+                      <motion.li 
+                        key={i} 
+                        className="suggestion-item" 
+                        onClick={() => handleSuggestionClick(s)}
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: i * 0.03 }}
+                        whileHover={{ scale: 1.005, backgroundColor: 'var(--bg-tertiary)' }}
+                      >
+                        {s.type === 'neighborhood'
+                          ? <><MapPin size={14} className="suggestion-icon" /><span>{s.label}</span><span className="suggestion-score">{s.score}/10</span></>
+                          : <><Home size={14} className="suggestion-icon" /><div><span>{s.label}</span><small>{s.sub}</small></div></>
+                        }
+                      </motion.li>
+                    ))}
+                  </motion.ul>
+                )}
+              </AnimatePresence>
             </motion.div>
           </motion.div>
         )}

@@ -1,23 +1,81 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { Upload, X, ChevronDown, MapPin, Home, CheckCircle } from 'lucide-react';
+import { Upload, X, ChevronDown, MapPin, Home, CheckCircle, Loader2 } from 'lucide-react';
 import { addProperty } from '../../services/dataService';
 import Footer from '../../components/Footer/Footer';
+import CustomSelect from '../../components/CustomSelect/CustomSelect';
 import './AddProperty.css';
+
+// Helper to compress and resize images to Base64 in the browser to keep size light for Firestore / local storage
+const compressImage = (file) => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+        
+        const MAX_DIM = 800;
+        if (width > height) {
+          if (width > MAX_DIM) {
+            height = Math.round((height * MAX_DIM) / width);
+            width = MAX_DIM;
+          }
+        } else {
+          if (height > MAX_DIM) {
+            width = Math.round((width * MAX_DIM) / height);
+            height = MAX_DIM;
+          }
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        
+        // Compress to JPEG with 0.7 quality to keep size small (~30-50KB)
+        const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
+        resolve(compressedBase64);
+      };
+      img.onerror = (err) => reject(err);
+      img.src = e.target.result;
+    };
+    reader.onerror = (err) => reject(err);
+    reader.readAsDataURL(file);
+  });
+};
 
 export default function AddProperty() {
   const [images, setImages] = useState([]);
   const [submitted, setSubmitted] = useState(false);
   const [listingType, setListingType] = useState('Rent');
   const [dragOver, setDragOver] = useState(false);
+  const [isCompressing, setIsCompressing] = useState(false);
 
-  const handleFileChange = (e) => {
+  // Custom select states
+  const [type, setType] = useState('');
+  const [bedrooms, setBedrooms] = useState('2');
+  const [bathrooms, setBathrooms] = useState('2');
+  const [furnishing, setFurnishing] = useState('Semi Furnished');
+  const [neighborhoodName, setNeighborhoodName] = useState('');
+
+  const handleFileChange = async (e) => {
     const files = Array.from(e.target.files || []);
-    files.forEach(file => {
-      const url = URL.createObjectURL(file);
-      setImages(prev => [...prev, url]);
-    });
+    if (files.length === 0) return;
+
+    setIsCompressing(true);
+    for (const file of files) {
+      try {
+        const compressedBase64 = await compressImage(file);
+        setImages(prev => [...prev, compressedBase64]);
+      } catch (err) {
+        console.error("Error compressing image:", err);
+      }
+    }
+    setIsCompressing(false);
   };
 
   const removeImage = (i) => setImages(prev => prev.filter((_, idx) => idx !== i));
@@ -112,19 +170,32 @@ export default function AddProperty() {
                   <span className="ap-step">1</span> Property Images
                 </h3>
                 <div
-                  className={`image-upload-zone ${dragOver ? 'drag-over' : ''}`}
-                  onDragOver={e => { e.preventDefault(); setDragOver(true); }}
+                  className={`image-upload-zone ${dragOver ? 'drag-over' : ''} ${isCompressing ? 'compressing' : ''}`}
+                  onDragOver={e => { if (!isCompressing) { e.preventDefault(); setDragOver(true); } }}
                   onDragLeave={() => setDragOver(false)}
-                  onDrop={e => { e.preventDefault(); setDragOver(false); handleFileChange({ target: { files: e.dataTransfer.files } }); }}
-                  onClick={() => document.getElementById('img-upload').click()}
+                  onDrop={e => { e.preventDefault(); setDragOver(false); if (!isCompressing) handleFileChange({ target: { files: e.dataTransfer.files } }); }}
+                  onClick={() => { if (!isCompressing) document.getElementById('img-upload').click(); }}
+                  style={{ opacity: isCompressing ? 0.7 : 1, cursor: isCompressing ? 'not-allowed' : 'pointer' }}
                 >
-                  <Upload size={28} className="upload-icon" />
-                  <div className="upload-text">
-                    <strong>Drag & drop images here</strong>
-                    <span>or click to upload</span>
-                    <small>PNG, JPG up to 10MB each</small>
-                  </div>
-                  <input id="img-upload" type="file" multiple accept="image/*" className="hidden-input" onChange={handleFileChange} />
+                  {isCompressing ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+                      <Loader2 className="animate-spin" size={28} style={{ color: 'var(--brand-primary)' }} />
+                      <div className="upload-text">
+                        <strong>Optimizing images...</strong>
+                        <span>Resizing & compressing for faster uploads</span>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <Upload size={28} className="upload-icon" />
+                      <div className="upload-text">
+                        <strong>Drag & drop images here</strong>
+                        <span>or click to upload</span>
+                        <small>PNG, JPG up to 10MB each</small>
+                      </div>
+                    </>
+                  )}
+                  <input id="img-upload" type="file" multiple accept="image/*" className="hidden-input" onChange={handleFileChange} disabled={isCompressing} />
                 </div>
                 {images.length > 0 && (
                   <div className="image-preview-grid">
@@ -147,17 +218,14 @@ export default function AddProperty() {
                 <div className="form-grid-2">
                   <div className="form-group">
                     <label className="label">Property Type</label>
-                    <div className="select-wrap">
-                      <select className="select" name="type" required>
-                        <option value="">Select Type</option>
-                        <option>Apartment</option>
-                        <option>Villa</option>
-                        <option>Independent Floor</option>
-                        <option>Studio</option>
-                        <option>Penthouse</option>
-                      </select>
-                      <ChevronDown size={14} className="select-icon" />
-                    </div>
+                    <CustomSelect
+                      name="type"
+                      value={type}
+                      onChange={(e) => setType(e.target.value)}
+                      placeholder="Select Type"
+                      required
+                      options={['Apartment', 'Villa', 'Independent Floor', 'Studio', 'Penthouse']}
+                    />
                   </div>
 
                   <div className="form-group">
@@ -177,29 +245,24 @@ export default function AddProperty() {
 
                   <div className="form-group">
                     <label className="label">Bedrooms</label>
-                    <div className="select-wrap">
-                      <select className="select" name="bedrooms" required>
-                        <option>1</option>
-                        <option>2</option>
-                        <option>3</option>
-                        <option>4</option>
-                        <option>5+</option>
-                      </select>
-                      <ChevronDown size={14} className="select-icon" />
-                    </div>
+                    <CustomSelect
+                      name="bedrooms"
+                      value={bedrooms}
+                      onChange={(e) => setBedrooms(e.target.value)}
+                      required
+                      options={['1', '2', '3', '4', '5+']}
+                    />
                   </div>
 
                   <div className="form-group">
                     <label className="label">Bathrooms</label>
-                    <div className="select-wrap">
-                      <select className="select" name="bathrooms" required>
-                        <option>1</option>
-                        <option>2</option>
-                        <option>3</option>
-                        <option>4</option>
-                      </select>
-                      <ChevronDown size={14} className="select-icon" />
-                    </div>
+                    <CustomSelect
+                      name="bathrooms"
+                      value={bathrooms}
+                      onChange={(e) => setBathrooms(e.target.value)}
+                      required
+                      options={['1', '2', '3', '4']}
+                    />
                   </div>
 
                   <div className="form-group">
@@ -209,14 +272,12 @@ export default function AddProperty() {
 
                   <div className="form-group">
                     <label className="label">Furnishing</label>
-                    <div className="select-wrap">
-                      <select className="select" name="furnishing">
-                        <option>Fully Furnished</option>
-                        <option>Semi Furnished</option>
-                        <option>Unfurnished</option>
-                      </select>
-                      <ChevronDown size={14} className="select-icon" />
-                    </div>
+                    <CustomSelect
+                      name="furnishing"
+                      value={furnishing}
+                      onChange={(e) => setFurnishing(e.target.value)}
+                      options={['Fully Furnished', 'Semi Furnished', 'Unfurnished']}
+                    />
                   </div>
 
                   <div className="form-group">
@@ -241,16 +302,14 @@ export default function AddProperty() {
                   </div>
                   <div className="form-group">
                     <label className="label">Neighborhood</label>
-                    <div className="select-wrap">
-                      <select className="select" name="neighborhoodName" required>
-                        <option value="">Select Neighborhood</option>
-                        <option>Patia</option>
-                        <option>Khandagiri</option>
-                        <option>Chandrasekharpur</option>
-                        <option>Nayapalli</option>
-                      </select>
-                      <ChevronDown size={14} className="select-icon" />
-                    </div>
+                    <CustomSelect
+                      name="neighborhoodName"
+                      value={neighborhoodName}
+                      onChange={(e) => setNeighborhoodName(e.target.value)}
+                      placeholder="Select Neighborhood"
+                      required
+                      options={['Patia', 'Khandagiri', 'Chandrasekharpur', 'Nayapalli']}
+                    />
                   </div>
                   <div className="form-group">
                     <label className="label">Nearest Market</label>

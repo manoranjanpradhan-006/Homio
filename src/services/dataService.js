@@ -1,4 +1,4 @@
-import { db, isConfigured } from '../firebase';
+import { db, storage, isConfigured } from '../firebase';
 import { 
   collection, 
   getDocs, 
@@ -10,11 +10,46 @@ import {
   where,
   limit
 } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { 
   neighborhoods as mockNeighborhoods, 
   properties as mockProperties, 
   reviews as mockReviews 
 } from '../data/mockData';
+
+// Initialize from localStorage if present to ensure offline/fallback persistence
+let localNeighborhoods = [...mockNeighborhoods];
+let localProperties = [...mockProperties];
+let localReviews = [...mockReviews];
+
+const initLocalDB = () => {
+  try {
+    const storedProps = localStorage.getItem('homio_properties');
+    if (storedProps) {
+      localProperties = JSON.parse(storedProps);
+    } else {
+      localStorage.setItem('homio_properties', JSON.stringify(mockProperties));
+    }
+
+    const storedNeighborhoods = localStorage.getItem('homio_neighborhoods');
+    if (storedNeighborhoods) {
+      localNeighborhoods = JSON.parse(storedNeighborhoods);
+    } else {
+      localStorage.setItem('homio_neighborhoods', JSON.stringify(mockNeighborhoods));
+    }
+    
+    const storedReviews = localStorage.getItem('homio_reviews');
+    if (storedReviews) {
+      localReviews = JSON.parse(storedReviews);
+    } else {
+      localStorage.setItem('homio_reviews', JSON.stringify(mockReviews));
+    }
+  } catch (e) {
+    console.warn("localStorage persistence not available:", e);
+  }
+};
+
+initLocalDB();
 
 // Helper to convert Firestore document to a standard JS object with ID
 const docToData = (docSnap) => {
@@ -28,19 +63,55 @@ const docToData = (docSnap) => {
   };
 };
 
+// Helper to upload base64 or blob URL to Firebase Storage
+const uploadImageToStorage = async (imageSrc) => {
+  if (!isConfigured || !storage) return null;
+  try {
+    let blob;
+    if (imageSrc.startsWith('blob:')) {
+      const response = await fetch(imageSrc);
+      blob = await response.blob();
+    } else if (imageSrc.startsWith('data:')) {
+      const arr = imageSrc.split(',');
+      const mime = arr[0].match(/:(.*?);/)[1];
+      const bstr = atob(arr[1]);
+      let n = bstr.length;
+      const u8arr = new Uint8Array(n);
+      while (n--) {
+        u8arr[n] = bstr.charCodeAt(n);
+      }
+      blob = new Blob([u8arr], { type: mime });
+    } else {
+      return imageSrc; // Already a remote HTTP URL
+    }
+
+    const fileExt = blob.type.split('/')[1] || 'jpg';
+    const fileName = `properties/${Date.now()}-${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
+    const fileRef = ref(storage, fileName);
+    
+    await uploadBytes(fileRef, blob);
+    const downloadURL = await getDownloadURL(fileRef);
+    console.log("[DataService] Image uploaded successfully to storage:", downloadURL);
+    return downloadURL;
+  } catch (err) {
+    console.error("[DataService] Error uploading image to Firebase Storage, will fallback to original/Base64:", err);
+    return null;
+  }
+};
+
 /**
  * Fetch all neighborhoods. Falls back to mock data if Firestore is not configured or queries fail.
  */
 export const getNeighborhoods = async () => {
   if (!isConfigured || !db) {
     console.log("[DataService] Using mock neighborhoods (Firebase not configured)");
-    return mockNeighborhoods;
+    return localNeighborhoods;
   }
   try {
     const querySnapshot = await getDocs(collection(db, 'neighborhoods'));
     if (querySnapshot.empty) {
       console.log("[DataService] Neighborhoods collection is empty. Falling back to mock data.");
-      return mockNeighborhoods;
+      return localNeighborhoods;
     }
     const list = [];
     querySnapshot.forEach((doc) => {
@@ -50,7 +121,7 @@ export const getNeighborhoods = async () => {
     return list.sort((a, b) => a.id - b.id);
   } catch (error) {
     console.error("[DataService] Error fetching neighborhoods from Firestore:", error);
-    return mockNeighborhoods;
+    return localNeighborhoods;
   }
 };
 
@@ -60,7 +131,7 @@ export const getNeighborhoods = async () => {
 export const getNeighborhoodById = async (id) => {
   const targetId = String(id);
   if (!isConfigured || !db) {
-    return mockNeighborhoods.find(n => String(n.id) === targetId);
+    return localNeighborhoods.find(n => String(n.id) === targetId);
   }
   try {
     const docRef = doc(db, 'neighborhoods', targetId);
@@ -69,10 +140,10 @@ export const getNeighborhoodById = async (id) => {
       return docToData(docSnap);
     }
     // Try matching numeric or string ID in mock data
-    return mockNeighborhoods.find(n => String(n.id) === targetId);
+    return localNeighborhoods.find(n => String(n.id) === targetId);
   } catch (error) {
     console.error(`[DataService] Error fetching neighborhood ${id}:`, error);
-    return mockNeighborhoods.find(n => String(n.id) === targetId);
+    return localNeighborhoods.find(n => String(n.id) === targetId);
   }
 };
 
@@ -82,13 +153,13 @@ export const getNeighborhoodById = async (id) => {
 export const getProperties = async () => {
   if (!isConfigured || !db) {
     console.log("[DataService] Using mock properties (Firebase not configured)");
-    return mockProperties;
+    return localProperties;
   }
   try {
     const querySnapshot = await getDocs(collection(db, 'properties'));
     if (querySnapshot.empty) {
       console.log("[DataService] Properties collection is empty. Falling back to mock data.");
-      return mockProperties;
+      return localProperties;
     }
     const list = [];
     querySnapshot.forEach((doc) => {
@@ -97,7 +168,7 @@ export const getProperties = async () => {
     return list.sort((a, b) => a.id - b.id);
   } catch (error) {
     console.error("[DataService] Error fetching properties from Firestore:", error);
-    return mockProperties;
+    return localProperties;
   }
 };
 
@@ -107,7 +178,7 @@ export const getProperties = async () => {
 export const getPropertyById = async (id) => {
   const targetId = String(id);
   if (!isConfigured || !db) {
-    return mockProperties.find(p => String(p.id) === targetId);
+    return localProperties.find(p => String(p.id) === targetId);
   }
   try {
     const docRef = doc(db, 'properties', targetId);
@@ -115,10 +186,10 @@ export const getPropertyById = async (id) => {
     if (docSnap.exists()) {
       return docToData(docSnap);
     }
-    return mockProperties.find(p => String(p.id) === targetId);
+    return localProperties.find(p => String(p.id) === targetId);
   } catch (error) {
     console.error(`[DataService] Error fetching property ${id}:`, error);
-    return mockProperties.find(p => String(p.id) === targetId);
+    return localProperties.find(p => String(p.id) === targetId);
   }
 };
 
@@ -128,7 +199,7 @@ export const getPropertyById = async (id) => {
 export const getReviews = async (neighborhoodId) => {
   const targetNeighborhoodId = Number(neighborhoodId);
   if (!isConfigured || !db) {
-    return mockReviews.filter(r => r.neighborhoodId === targetNeighborhoodId);
+    return localReviews.filter(r => r.neighborhoodId === targetNeighborhoodId);
   }
   try {
     const q = query(collection(db, 'reviews'), where('neighborhoodId', '==', targetNeighborhoodId));
@@ -136,7 +207,7 @@ export const getReviews = async (neighborhoodId) => {
     
     // If empty in Firestore, but we have them in mock data, return mock data
     if (querySnapshot.empty) {
-      const mockResult = mockReviews.filter(r => r.neighborhoodId === targetNeighborhoodId);
+      const mockResult = localReviews.filter(r => r.neighborhoodId === targetNeighborhoodId);
       if (mockResult.length > 0) return mockResult;
     }
     
@@ -147,7 +218,7 @@ export const getReviews = async (neighborhoodId) => {
     return list;
   } catch (error) {
     console.error(`[DataService] Error fetching reviews for neighborhood ${neighborhoodId}:`, error);
-    return mockReviews.filter(r => r.neighborhoodId === targetNeighborhoodId);
+    return localReviews.filter(r => r.neighborhoodId === targetNeighborhoodId);
   }
 };
 
@@ -163,13 +234,31 @@ export const addProperty = async (propertyData) => {
     "https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=800&q=80",
   ];
   
-  // Use uploaded images if they are valid URLs, otherwise select a nice stock image
-  const finalImages = propertyData.images && propertyData.images.length > 0 && !propertyData.images[0].startsWith('blob:')
-    ? propertyData.images
+  // Try uploading any uploaded images to Firebase Storage first (if configured/supported)
+  const uploadedImageUrls = [];
+  if (propertyData.images && propertyData.images.length > 0) {
+    for (const img of propertyData.images) {
+      if (img.startsWith('data:') || img.startsWith('blob:')) {
+        const url = await uploadImageToStorage(img);
+        if (url) {
+          uploadedImageUrls.push(url);
+        } else {
+          // If storage fails/is not configured, keep the compressed Base64 representation
+          uploadedImageUrls.push(img);
+        }
+      } else {
+        uploadedImageUrls.push(img);
+      }
+    }
+  }
+
+  const finalImages = uploadedImageUrls.length > 0
+    ? uploadedImageUrls
     : [premiumPlaceholders[Math.floor(Math.random() * premiumPlaceholders.length)]];
 
   const newProperty = {
     ...propertyData,
+    city: propertyData.city || "Bhubaneswar",
     images: finalImages,
     amenities: propertyData.amenities && propertyData.amenities.length > 0
       ? propertyData.amenities
@@ -183,9 +272,14 @@ export const addProperty = async (propertyData) => {
 
   if (!isConfigured || !db) {
     console.log("[DataService] Saving property to local simulation (Firebase not configured)");
-    const newId = mockProperties.length + 1;
+    const newId = localProperties.length + 1;
     const simulated = { ...newProperty, id: newId };
-    mockProperties.push(simulated);
+    localProperties.push(simulated);
+    try {
+      localStorage.setItem('homio_properties', JSON.stringify(localProperties));
+    } catch (e) {
+      console.warn("Failed to save properties to localStorage:", e);
+    }
     return simulated;
   }
 
@@ -199,9 +293,14 @@ export const addProperty = async (propertyData) => {
   } catch (error) {
     console.error("[DataService] Error saving property to Firestore:", error);
     // Local simulation fallback
-    const newId = mockProperties.length + 1;
+    const newId = localProperties.length + 1;
     const simulated = { ...newProperty, id: newId };
-    mockProperties.push(simulated);
+    localProperties.push(simulated);
+    try {
+      localStorage.setItem('homio_properties', JSON.stringify(localProperties));
+    } catch (e) {
+      console.warn("Failed to save properties to localStorage:", e);
+    }
     return simulated;
   }
 };
@@ -222,9 +321,14 @@ export const addReview = async (reviewData) => {
 
   if (!isConfigured || !db) {
     console.log("[DataService] Saving review to local simulation");
-    const newId = mockReviews.length + 1;
+    const newId = localReviews.length + 1;
     const simulated = { ...newReview, id: newId };
-    mockReviews.push(simulated);
+    localReviews.push(simulated);
+    try {
+      localStorage.setItem('homio_reviews', JSON.stringify(localReviews));
+    } catch (e) {
+      console.warn("Failed to save reviews to localStorage:", e);
+    }
     return simulated;
   }
 
@@ -236,9 +340,14 @@ export const addReview = async (reviewData) => {
     return { ...newReview, id: timestampId };
   } catch (error) {
     console.error("[DataService] Error saving review to Firestore:", error);
-    const newId = mockReviews.length + 1;
+    const newId = localReviews.length + 1;
     const simulated = { ...newReview, id: newId };
-    mockReviews.push(simulated);
+    localReviews.push(simulated);
+    try {
+      localStorage.setItem('homio_reviews', JSON.stringify(localReviews));
+    } catch (e) {
+      console.warn("Failed to save reviews to localStorage:", e);
+    }
     return simulated;
   }
 };

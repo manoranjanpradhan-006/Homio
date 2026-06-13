@@ -1,5 +1,6 @@
 import { initializeApp } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
+import { getStorage } from 'firebase/storage';
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -13,6 +14,7 @@ const firebaseConfig = {
 
 let app = null;
 let db = null;
+let storage = null;
 let isConfigured = false;
 
 // Basic validation: must have at least apiKey and projectId
@@ -20,6 +22,7 @@ if (firebaseConfig.apiKey && firebaseConfig.projectId && !firebaseConfig.apiKey.
   try {
     app = initializeApp(firebaseConfig);
     db = getFirestore(app);
+    storage = getStorage(app);
     isConfigured = true;
     console.log("Firebase initialized successfully!");
   } catch (error) {
@@ -29,4 +32,4 @@ if (firebaseConfig.apiKey && firebaseConfig.projectId && !firebaseConfig.apiKey.
   console.warn("Firebase config is missing or incomplete. Homio will run in Mock Fallback mode.");
 }
 
-export { db, isConfigured, firebaseConfig };
+export { db, storage, isConfigured, firebaseConfig };

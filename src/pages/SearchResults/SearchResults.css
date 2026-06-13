@@ -173,3 +173,7 @@
 @media (max-width: 480px) {
   .results-grid { grid-template-columns: 1fr; }
 }
+
+.sort-custom-select {
+  min-width: 155px;
+}

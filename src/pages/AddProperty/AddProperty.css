@@ -187,3 +187,12 @@
   .form-grid-2 { grid-template-columns: 1fr; }
   .ap-section { padding: 20px; }
 }
+
+/* Spinner Animation */
+@keyframes ap-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.animate-spin {
+  animation: ap-spin 1s linear infinite;
+}
