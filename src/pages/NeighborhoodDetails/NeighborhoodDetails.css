@@ -1,0 +1,270 @@
+/* Hero */
+.nd-hero {
+  height: 340px;
+  background-size: cover;
+  background-position: center;
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+}
+.nd-hero-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.3) 60%, transparent 100%);
+}
+.nd-hero-content { position: relative; z-index: 1; padding-bottom: 32px; }
+.breadcrumb-light {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8125rem;
+  color: rgba(255,255,255,0.7);
+  margin-bottom: 16px;
+}
+.breadcrumb-light a { color: rgba(255,255,255,0.8); text-decoration: none; }
+.breadcrumb-light a:hover { color: white; }
+.breadcrumb-light span { color: white; }
+.nd-hero-main {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.nd-hero-title { font-size: 2.5rem; font-weight: 900; color: white; font-family: 'Outfit', sans-serif; margin-bottom: 8px; }
+.nd-hero-sub { display: flex; align-items: center; gap: 6px; font-size: 0.9375rem; color: rgba(255,255,255,0.8); }
+.nd-hero-actions { display: flex; gap: 10px; }
+.btn-ghost.btn-white { color: white; border-color: rgba(255,255,255,0.4); }
+.btn-ghost.btn-white:hover { background: rgba(255,255,255,0.15); }
+
+/* Layout */
+.nd-layout {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 40px;
+  padding-top: 32px;
+  align-items: start;
+}
+
+/* Score Card */
+.score-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-xl);
+  padding: 28px;
+  box-shadow: var(--shadow-md);
+}
+.score-card-left {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  margin-bottom: 24px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border-default);
+}
+.overall-score {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16px 20px;
+  border-radius: var(--radius-xl);
+  min-width: 100px;
+}
+.os-number { font-family: 'Outfit', sans-serif; font-size: 3rem; font-weight: 900; line-height: 1; }
+.os-denom { font-size: 0.875rem; color: var(--text-tertiary); }
+.os-label { font-size: 0.75rem; font-weight: 700; margin-top: 4px; }
+.score-card-title { font-size: 1.125rem; font-weight: 700; margin-bottom: 4px; }
+.score-card-sub { font-size: 0.8125rem; color: var(--text-secondary); margin-bottom: 8px; }
+.score-card-link {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.8125rem;
+  color: var(--brand-primary);
+  text-decoration: none;
+  font-weight: 500;
+}
+.score-breakdown { display: flex; flex-direction: column; gap: 12px; }
+.sb-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.sb-icon { font-size: 1rem; width: 20px; text-align: center; }
+.sb-label { font-size: 0.8125rem; color: var(--text-secondary); width: 100px; flex-shrink: 0; }
+.sb-value { font-size: 0.875rem; font-weight: 700; width: 24px; text-align: right; flex-shrink: 0; }
+
+/* Sections */
+.nd-section { margin-top: 32px; padding-top: 32px; border-top: 1px solid var(--border-default); }
+.nd-section-title { font-size: 1.25rem; font-weight: 700; margin-bottom: 16px; }
+.nd-section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.nd-section-header .nd-section-title { margin-bottom: 0; }
+.nd-about { color: var(--text-secondary); line-height: 1.8; font-size: 0.9375rem; }
+
+/* Amenity Tabs */
+.amenity-tabs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+.amenity-tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: var(--radius-full);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-default);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+.amenity-tab:hover { border-color: var(--brand-primary); color: var(--brand-primary); }
+.amenity-tab.active { background: var(--brand-primary); border-color: var(--brand-primary); color: white; }
+
+.amenity-list { display: flex; flex-direction: column; gap: 10px; }
+.amenity-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 16px;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-md);
+  transition: background var(--transition-fast);
+}
+.amenity-row:hover { background: var(--bg-card); box-shadow: var(--shadow-sm); }
+.amenity-row-icon { font-size: 1.25rem; }
+.amenity-row-info { flex: 1; }
+.amenity-row-name { font-size: 0.875rem; font-weight: 600; color: var(--text-primary); }
+.amenity-row-dist { font-size: 0.8125rem; color: var(--text-tertiary); margin-top: 2px; }
+.amenity-row-rating {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: #f59e0b;
+}
+
+/* Homes Grid */
+.nd-homes-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+/* No Reviews */
+.nd-no-reviews {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 40px;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-xl);
+  text-align: center;
+  color: var(--text-tertiary);
+}
+
+/* Review Card */
+.review-card-nd {
+  padding: 20px;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-lg);
+  margin-bottom: 12px;
+}
+.review-header-nd {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.reviewer-avatar {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: white;
+  flex-shrink: 0;
+}
+.reviewer-name { font-size: 0.9375rem; font-weight: 600; color: var(--text-primary); }
+.verified-badge { font-size: 0.75rem; color: var(--brand-primary); margin-left: 6px; }
+.review-meta { font-size: 0.8125rem; color: var(--text-tertiary); }
+.review-body { display: flex; flex-direction: column; gap: 8px; }
+.review-pros, .review-cons {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+}
+.review-pros { color: var(--brand-primary); }
+.review-cons { color: var(--accent-red); }
+.review-pros ul, .review-cons ul { list-style: none; display: flex; flex-direction: column; gap: 3px; }
+.review-pros strong, .review-cons strong { flex-shrink: 0; }
+
+/* Sidebar */
+.nd-sidebar { display: flex; flex-direction: column; gap: 20px; position: sticky; top: 88px; }
+
+.ai-card {
+  background: linear-gradient(135deg, rgba(16,185,129,0.08), rgba(14,165,233,0.08));
+  border: 1px solid rgba(16,185,129,0.2);
+  border-radius: var(--radius-xl);
+  padding: 20px;
+}
+.ai-card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 14px;
+}
+.ai-icon { color: var(--brand-primary); }
+.ai-badge {
+  background: var(--brand-primary);
+  color: white;
+  font-size: 0.625rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: var(--radius-full);
+  margin-left: auto;
+}
+.ai-text { font-size: 0.875rem; color: var(--text-secondary); line-height: 1.7; font-style: italic; }
+
+.quick-stats {
+  background: var(--bg-card);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-xl);
+  padding: 20px;
+}
+.quick-stats h4 { font-size: 0.875rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-tertiary); margin-bottom: 16px; }
+.qs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.qs-item { display: flex; flex-direction: column; gap: 4px; }
+.qs-val { font-family: 'Outfit', sans-serif; font-size: 1.375rem; font-weight: 800; color: var(--text-primary); }
+.qs-label { font-size: 0.75rem; color: var(--text-tertiary); }
+
+.nd-compare-cta {
+  background: var(--bg-card);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-xl);
+  padding: 20px;
+}
+.nd-compare-cta h4 { font-weight: 700; margin-bottom: 8px; }
+.nd-compare-cta p { font-size: 0.875rem; color: var(--text-secondary); }
+
+@media (max-width: 1100px) {
+  .nd-layout { grid-template-columns: 1fr; }
+  .nd-sidebar { position: static; }
+  .nd-homes-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 640px) {
+  .nd-hero-title { font-size: 1.75rem; }
+  .score-card-left { flex-direction: column; align-items: flex-start; }
+  .nd-homes-grid { grid-template-columns: 1fr; }
+}
