@@ -120,7 +120,7 @@ export default function PropertyDetails() {
             <div className="pd-section">
               <h3 className="pd-section-title">Amenities & Features</h3>
               <div className="amenities-grid">
-                {property.amenities.map((a, i) => (
+                {(property.amenities || ["Power Backup", "Security", "Car Parking"]).map((a, i) => (
                   <div key={i} className="amenity-item">
                     <CheckCircle size={16} className="amenity-icon" />
                     {a}

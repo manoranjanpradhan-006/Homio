@@ -171,6 +171,9 @@ export const addProperty = async (propertyData) => {
   const newProperty = {
     ...propertyData,
     images: finalImages,
+    amenities: propertyData.amenities && propertyData.amenities.length > 0
+      ? propertyData.amenities
+      : ["Power Backup", "Lift", "Security", "Car Parking", "CCTV", "Gym"],
     lat: propertyData.lat || 20.3500 + (Math.random() - 0.5) * 0.05, // Random lat near BBSR
     lng: propertyData.lng || 85.8200 + (Math.random() - 0.5) * 0.05, // Random lng near BBSR
     isFeatured: propertyData.isFeatured || false,
