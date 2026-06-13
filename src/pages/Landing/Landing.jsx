@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 import { Search, MapPin, Shield, MessageSquare, Sparkles, ArrowRight, TrendingUp, Home, ChevronRight } from 'lucide-react';
-import { neighborhoods, properties } from '../../data/mockData';
+import { getNeighborhoods, getProperties } from '../../services/dataService';
 import PropertyCard from '../../components/PropertyCard/PropertyCard';
 import NeighborhoodCard from '../../components/NeighborhoodCard/NeighborhoodCard';
 import Footer from '../../components/Footer/Footer';
@@ -20,6 +20,17 @@ const stagger = {
 export default function Landing() {
   const [searchQuery, setSearchQuery] = useState('');
   const navigate = useNavigate();
+  const [neighborhoods, setNeighborhoods] = useState([]);
+  const [properties, setProperties] = useState([]);
+
+  useEffect(() => {
+    const loadData = async () => {
+      const [nData, pData] = await Promise.all([getNeighborhoods(), getProperties()]);
+      setNeighborhoods(nData);
+      setProperties(pData);
+    };
+    loadData();
+  }, []);
 
   const handleSearch = (e) => {
     e.preventDefault();

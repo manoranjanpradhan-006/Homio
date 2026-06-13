@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -6,7 +6,8 @@ import {
   ArrowRight, ChevronRight, Sparkles, Home, ThumbsUp, ThumbsDown,
   Heart
 } from 'lucide-react';
-import { neighborhoods, properties, reviews, getScoreColor, getScoreLabel } from '../../data/mockData';
+import { getScoreColor, getScoreLabel } from '../../data/mockData';
+import { getNeighborhoodById, getReviews, getProperties } from '../../services/dataService';
 import { useFavorites } from '../../context/FavoritesContext';
 import PropertyCard from '../../components/PropertyCard/PropertyCard';
 import Footer from '../../components/Footer/Footer';
@@ -24,22 +25,55 @@ const scoreKeys = [
 
 export default function NeighborhoodDetails() {
   const { id } = useParams();
-  const neighborhood = neighborhoods.find(n => n.id === parseInt(id)) || neighborhoods[0];
+  const [neighborhood, setNeighborhood] = useState(null);
+  const [neighborhoodReviews, setNeighborhoodReviews] = useState([]);
+  const [neighborhoodProperties, setNeighborhoodProperties] = useState([]);
+  const [loading, setLoading] = useState(true);
   const { savedNeighborhoods, toggleNeighborhood } = useFavorites();
-  const isSaved = savedNeighborhoods.includes(neighborhood.id);
-
-  const neighborhoodReviews = reviews.filter(r => r.reviewId === neighborhood.id || r.neighborhoodId === neighborhood.id);
-  const neighborhoodProperties = properties.filter(p => p.neighborhoodId === neighborhood.id);
-  const scoreColor = getScoreColor(neighborhood.overallScore);
-
   const [activeTab, setActiveTab] = useState('schools');
 
+  useEffect(() => {
+    const loadNeighborhoodData = async () => {
+      setLoading(true);
+      const nData = await getNeighborhoodById(id);
+      if (nData) {
+        setNeighborhood(nData);
+        const [rData, allProps] = await Promise.all([
+          getReviews(nData.id),
+          getProperties()
+        ]);
+        setNeighborhoodReviews(rData || []);
+        if (allProps) {
+          setNeighborhoodProperties(allProps.filter(p => p.neighborhoodId === nData.id));
+        }
+      }
+      setLoading(false);
+    };
+    loadNeighborhoodData();
+  }, [id]);
+
+  if (loading || !neighborhood) {
+    return (
+      <div className="page-wrapper">
+        <div className="container" style={{ paddingTop: 40 }}>
+          <div className="skeleton" style={{ height: 300, marginBottom: 24, width: '100%', borderRadius: 16 }} />
+          <div className="skeleton" style={{ height: 32, marginBottom: 12, width: '60%' }} />
+          <div className="skeleton" style={{ height: 16, marginBottom: 40, width: '40%' }} />
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  const isSaved = savedNeighborhoods.includes(neighborhood.id);
+  const scoreColor = getScoreColor(neighborhood.overallScore);
+
   const amenityTypes = {
-    schools: { label: 'Schools', icon: '🎓', data: neighborhood.amenities.schools },
-    hospitals: { label: 'Hospitals', icon: '🏥', data: neighborhood.amenities.hospitals },
-    markets: { label: 'Markets', icon: '🛒', data: neighborhood.amenities.markets },
-    parks: { label: 'Parks', icon: '🌳', data: neighborhood.amenities.parks },
-    restaurants: { label: 'Restaurants', icon: '🍽️', data: neighborhood.amenities.restaurants },
+    schools: { label: 'Schools', icon: '🎓', data: neighborhood.amenities?.schools || [] },
+    hospitals: { label: 'Hospitals', icon: '🏥', data: neighborhood.amenities?.hospitals || [] },
+    markets: { label: 'Markets', icon: '🛒', data: neighborhood.amenities?.markets || [] },
+    parks: { label: 'Parks', icon: '🌳', data: neighborhood.amenities?.parks || [] },
+    restaurants: { label: 'Restaurants', icon: '🍽️', data: neighborhood.amenities?.restaurants || [] },
   };
 
   return (

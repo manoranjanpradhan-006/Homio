@@ -1,7 +1,7 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SlidersHorizontal, X, ChevronDown, ArrowUpDown, ChevronLeft, ChevronRight } from 'lucide-react';
-import { properties } from '../../data/mockData';
+import { getProperties } from '../../services/dataService';
 import PropertyCard from '../../components/PropertyCard/PropertyCard';
 import Footer from '../../components/Footer/Footer';
 import './SearchResults.css';
@@ -9,6 +9,7 @@ import './SearchResults.css';
 const PER_PAGE = 6;
 
 export default function SearchResults() {
+  const [properties, setProperties] = useState([]);
   const [filters, setFilters] = useState({
     type: 'All', minPrice: 5000, maxPrice: 100000,
     neighborhood: 'All', bedrooms: 'Any',
@@ -17,6 +18,14 @@ export default function SearchResults() {
   const [sort, setSort] = useState('score');
   const [page, setPage] = useState(1);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+
+  useEffect(() => {
+    const fetchProps = async () => {
+      const data = await getProperties();
+      setProperties(data);
+    };
+    fetchProps();
+  }, []);
 
   const setFilter = (key, val) => { setFilters(f => ({ ...f, [key]: val })); setPage(1); };
 
@@ -33,7 +42,7 @@ export default function SearchResults() {
     else if (sort === 'score') list.sort((a, b) => b.neighborhoodScore - a.neighborhoodScore);
     else if (sort === 'newest') list.sort((a, b) => (b.isNew ? 1 : 0) - (a.isNew ? 1 : 0));
     return list;
-  }, [filters, sort]);
+  }, [filters, sort, properties]);
 
   const totalPages = Math.ceil(filtered.length / PER_PAGE);
   const paginated = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE);

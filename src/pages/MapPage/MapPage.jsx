@@ -1,17 +1,29 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { MapPin, X, SlidersHorizontal, Bed, Bath, Star, ArrowRight, ChevronDown, Home, Navigation } from 'lucide-react';
-import { properties, neighborhoods, formatPrice, getScoreColor } from '../../data/mockData';
+import { formatPrice, getScoreColor } from '../../data/mockData';
+import { getProperties, getNeighborhoods } from '../../services/dataService';
 import './MapPage.css';
 
 // Simple map visualization (without actual Leaflet to avoid CSS conflicts)
 export default function MapPage() {
+  const [properties, setProperties] = useState([]);
+  const [neighborhoods, setNeighborhoods] = useState([]);
   const [selectedProperty, setSelectedProperty] = useState(null);
   const [hoveredPin, setHoveredPin] = useState(null);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [filterType, setFilterType] = useState('All');
   const [filterScore, setFilterScore] = useState(0);
+
+  useEffect(() => {
+    const loadMapData = async () => {
+      const [pData, nData] = await Promise.all([getProperties(), getNeighborhoods()]);
+      setProperties(pData);
+      setNeighborhoods(nData);
+    };
+    loadMapData();
+  }, []);
 
   const filtered = properties.filter(p => {
     if (filterType !== 'All' && p.listingType !== filterType) return false;
@@ -31,11 +43,16 @@ export default function MapPage() {
     { id: 8, x: 20, y: 63, type: 'property' },
   ];
 
+  const getNeighborhoodScore = (nId, defaultScore) => {
+    const found = neighborhoods.find(n => n.id === nId);
+    return found ? found.overallScore : defaultScore;
+  };
+
   const neighborhoodPins = [
-    { id: 1, x: 40, y: 30, label: 'Patia', score: 8.4 },
-    { id: 2, x: 20, y: 60, label: 'Khandagiri', score: 7.6 },
-    { id: 3, x: 65, y: 40, label: 'CSP', score: 8.2 },
-    { id: 4, x: 50, y: 53, label: 'Nayapalli', score: 7.6 },
+    { id: 1, x: 40, y: 30, label: 'Patia', score: getNeighborhoodScore(1, 8.4) },
+    { id: 2, x: 20, y: 60, label: 'Khandagiri', score: getNeighborhoodScore(2, 7.6) },
+    { id: 3, x: 65, y: 40, label: 'CSP', score: getNeighborhoodScore(3, 8.2) },
+    { id: 4, x: 50, y: 53, label: 'Nayapalli', score: getNeighborhoodScore(4, 7.6) },
   ];
 
   return (

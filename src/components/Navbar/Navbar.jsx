@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sun, Moon, Bell, User, Search, MapPin, Home, Map, Star, GitCompare, MessageSquare, Plus, Heart, X, Menu } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
-import { neighborhoods, properties } from '../../data/mockData';
+import { getNeighborhoods, getProperties } from '../../services/dataService';
 import './Navbar.css';
 
 const navLinks = [
@@ -24,6 +24,8 @@ export default function Navbar() {
   const [searchQuery, setSearchQuery] = useState('');
   const [suggestions, setSuggestions] = useState([]);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [neighborhoods, setNeighborhoods] = useState([]);
+  const [properties, setProperties] = useState([]);
   const searchRef = useRef(null);
 
   useEffect(() => {
@@ -36,6 +38,16 @@ export default function Navbar() {
     setMobileOpen(false);
   }, [location.pathname]);
 
+  // Load items for search suggestions dynamically
+  useEffect(() => {
+    const loadSearchItems = async () => {
+      const [nData, pData] = await Promise.all([getNeighborhoods(), getProperties()]);
+      setNeighborhoods(nData || []);
+      setProperties(pData || []);
+    };
+    loadSearchItems();
+  }, [location.pathname]);
+
   useEffect(() => {
     if (searchQuery.trim().length < 2) { setSuggestions([]); return; }
     const q = searchQuery.toLowerCase();
@@ -46,7 +58,7 @@ export default function Navbar() {
       p.title.toLowerCase().includes(q) || p.neighborhoodName.toLowerCase().includes(q)
     ).slice(0, 2).map(p => ({ type: 'property', label: p.title, sub: p.address, id: p.id }));
     setSuggestions([...nSugg.slice(0, 3), ...pSugg]);
-  }, [searchQuery]);
+  }, [searchQuery, neighborhoods, properties]);
 
   const handleSuggestionClick = (s) => {
     if (s.type === 'neighborhood') navigate(`/neighborhoods/${s.id}`);

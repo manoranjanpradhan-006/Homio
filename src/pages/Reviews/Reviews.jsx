@@ -1,31 +1,19 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ThumbsUp, ThumbsDown, Star, Plus, X, ChevronDown } from 'lucide-react';
-import { reviews, neighborhoods } from '../../data/mockData';
+import { getNeighborhoodById, getNeighborhoods, getReviews, addReview } from '../../services/dataService';
 import Footer from '../../components/Footer/Footer';
 import './Reviews.css';
-
-const ALL_REVIEWS = [
-  ...reviews,
-  {
-    id: 10, neighborhoodId: 1, user: "Aditya K.", avatar: "AK", avatarColor: "#0ea5e9",
-    verified: true, rating: 5.0, date: "1 week ago",
-    pros: ["Best place I've lived", "Extremely safe", "Great neighbors"],
-    cons: ["Can be expensive"], helpful: 22, notHelpful: 0,
-  },
-  {
-    id: 11, neighborhoodId: 2, user: "Smita R.", avatar: "SR", avatarColor: "#6366f1",
-    verified: false, rating: 3.5, date: "3 months ago",
-    pros: ["Heritage vibes", "Good air quality"], cons: ["Traffic near caves", "Limited entertainment"],
-    helpful: 5, notHelpful: 3,
-  },
-];
 
 export default function Reviews() {
   const { id } = useParams();
   const neighborhoodId = parseInt(id) || 1;
-  const neighborhood = neighborhoods.find(n => n.id === neighborhoodId) || neighborhoods[0];
+  
+  const [neighborhood, setNeighborhood] = useState(null);
+  const [allNeighborhoods, setAllNeighborhoods] = useState([]);
+  const [neighborhoodReviews, setNeighborhoodReviews] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const [tab, setTab] = useState('latest');
   const [addOpen, setAddOpen] = useState(false);
@@ -33,7 +21,67 @@ export default function Reviews() {
   const [hoverRating, setHoverRating] = useState(0);
   const [helpful, setHelpful] = useState({});
 
-  const neighborhoodReviews = ALL_REVIEWS.filter(r => r.neighborhoodId === neighborhoodId);
+  useEffect(() => {
+    const loadReviewsData = async () => {
+      setLoading(true);
+      const [nData, listData, rData] = await Promise.all([
+        getNeighborhoodById(neighborhoodId),
+        getNeighborhoods(),
+        getReviews(neighborhoodId)
+      ]);
+      setNeighborhood(nData);
+      setAllNeighborhoods(listData);
+      setNeighborhoodReviews(rData || []);
+      setLoading(false);
+    };
+    loadReviewsData();
+  }, [neighborhoodId]);
+
+  const handleReviewSubmit = async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    
+    // Find target neighborhood by name from dropdown
+    const selectedName = formData.get('neighborhoodName').split(',')[0].trim();
+    const selectedNeighborhood = allNeighborhoods.find(n => n.name === selectedName) || neighborhood;
+
+    const reviewData = {
+      neighborhoodId: selectedNeighborhood.id,
+      user: formData.get('userName') || 'Anonymous',
+      rating: newRating,
+      pros: formData.get('pros') ? formData.get('pros').split(',').map(p => p.trim()).filter(Boolean) : [],
+      cons: formData.get('cons') ? formData.get('cons').split(',').map(c => c.trim()).filter(Boolean) : [],
+      text: formData.get('reviewText') || '',
+      avatarColor: ['#ef4444', '#f59e0b', '#10b981', '#0ea5e9', '#6366f1', '#8b5cf6'][Math.floor(Math.random() * 6)]
+    };
+
+    try {
+      const added = await addReview(reviewData);
+      // If the review is added for the CURRENT neighborhood page, append to reviews state
+      if (reviewData.neighborhoodId === neighborhoodId) {
+        setNeighborhoodReviews(prev => [added, ...prev]);
+      }
+      setAddOpen(false);
+      setNewRating(5);
+    } catch (err) {
+      console.error(err);
+      alert('Error submitting review');
+    }
+  };
+
+  if (loading || !neighborhood) {
+    return (
+      <div className="page-wrapper">
+        <div className="container" style={{ paddingTop: 40 }}>
+          <div className="skeleton" style={{ height: 120, marginBottom: 24, width: '100%', borderRadius: 16 }} />
+          <div className="skeleton" style={{ height: 32, marginBottom: 12, width: '60%' }} />
+          <div className="skeleton" style={{ height: 16, marginBottom: 40, width: '40%' }} />
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
   const avgRating = neighborhoodReviews.length
     ? neighborhoodReviews.reduce((s, r) => s + r.rating, 0) / neighborhoodReviews.length
     : 0;
@@ -225,15 +273,15 @@ export default function Reviews() {
             >
               <div className="arm-header">
                 <h3>Write a Review</h3>
-                <button onClick={() => setAddOpen(false)}><X size={20} /></button>
+                <button type="button" onClick={() => setAddOpen(false)}><X size={20} /></button>
               </div>
 
-              <div className="arm-body">
+              <form onSubmit={handleReviewSubmit} className="arm-body">
                 <div className="form-group">
                   <label className="label">Neighborhood</label>
                   <div className="select-wrap">
-                    <select className="select">
-                      {neighborhoods.map(n => <option key={n.id}>{n.name}, {n.city}</option>)}
+                    <select className="select" name="neighborhoodName">
+                      {allNeighborhoods.map(n => <option key={n.id}>{n.name}, {n.city}</option>)}
                     </select>
                     <ChevronDown size={14} className="select-icon" />
                   </div>
@@ -260,28 +308,28 @@ export default function Reviews() {
 
                 <div className="form-group">
                   <label className="label">Pros (comma separated)</label>
-                  <input className="input" placeholder="Safe area, Good transport, Friendly neighbors" />
+                  <input className="input" name="pros" placeholder="Safe area, Good transport, Friendly neighbors" />
                 </div>
 
                 <div className="form-group">
                   <label className="label">Cons (comma separated)</label>
-                  <input className="input" placeholder="Traffic congestion, Parking issues" />
+                  <input className="input" name="cons" placeholder="Traffic congestion, Parking issues" />
                 </div>
 
                 <div className="form-group">
                   <label className="label">Full Review</label>
-                  <textarea className="textarea" placeholder="Share your detailed experience..." rows={4} />
+                  <textarea className="textarea" name="reviewText" placeholder="Share your detailed experience..." rows={4} />
                 </div>
 
                 <div className="form-group">
                   <label className="label">Your Name</label>
-                  <input className="input" placeholder="Enter your name" />
+                  <input className="input" name="userName" placeholder="Enter your name" required />
                 </div>
 
-                <button className="btn btn-primary" style={{ width: '100%' }}>
+                <button type="submit" className="btn btn-primary" style={{ width: '100%' }}>
                   Submit Review
                 </button>
-              </div>
+              </form>
             </motion.div>
           </motion.div>
         )}

@@ -10,6 +10,7 @@ import NeighborhoodDetails from './pages/NeighborhoodDetails/NeighborhoodDetails
 import Compare from './pages/Compare/Compare';
 import Reviews from './pages/Reviews/Reviews';
 import AddProperty from './pages/AddProperty/AddProperty';
+import DevPanel from './components/DevPanel/DevPanel';
 import './index.css';
 
 function App() {
@@ -28,6 +29,7 @@ function App() {
             <Route path="/reviews/:id" element={<Reviews />} />
             <Route path="/add-property" element={<AddProperty />} />
           </Routes>
+          <DevPanel />
         </BrowserRouter>
       </FavoritesProvider>
     </ThemeProvider>

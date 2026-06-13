@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { Plus, X, Sparkles, Users, GraduationCap, Banknote, TrendingUp } from 'lucide-react';
-import { neighborhoods, getScoreColor, getScoreLabel } from '../../data/mockData';
+import { getScoreColor, getScoreLabel } from '../../data/mockData';
+import { getNeighborhoods } from '../../services/dataService';
 import Footer from '../../components/Footer/Footer';
 import './Compare.css';
 
@@ -53,7 +54,22 @@ const aiRecommendations = [
 ];
 
 export default function Compare() {
-  const [selected, setSelected] = useState([neighborhoods[0], neighborhoods[1], neighborhoods[2]]);
+  const [neighborhoods, setNeighborhoods] = useState([]);
+  const [selected, setSelected] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchNeighborhoods = async () => {
+      setLoading(true);
+      const data = await getNeighborhoods();
+      setNeighborhoods(data || []);
+      if (data && data.length > 0) {
+        setSelected(data.slice(0, 3));
+      }
+      setLoading(false);
+    };
+    fetchNeighborhoods();
+  }, []);
 
   const addNeighborhood = (n) => {
     if (selected.length >= 3) return;
@@ -76,6 +92,18 @@ export default function Compare() {
   };
 
   const available = neighborhoods.filter(n => !selected.find(s => s.id === n.id));
+
+  if (loading) {
+    return (
+      <div className="page-wrapper">
+        <div className="container" style={{ paddingTop: 40 }}>
+          <div className="skeleton" style={{ height: 60, marginBottom: 24, width: '40%' }} />
+          <div className="skeleton" style={{ height: 350, marginBottom: 40, width: '100%', borderRadius: 16 }} />
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="page-wrapper">

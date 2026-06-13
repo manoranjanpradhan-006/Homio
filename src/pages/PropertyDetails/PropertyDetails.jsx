@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -6,7 +6,8 @@ import {
   Heart, Share2, ChevronLeft, ChevronRight, CheckCircle,
   Building, Zap, Shield, Navigation, ArrowLeft
 } from 'lucide-react';
-import { properties, neighborhoods, formatPrice, getScoreColor, getScoreLabel } from '../../data/mockData';
+import { formatPrice, getScoreColor, getScoreLabel } from '../../data/mockData';
+import { getPropertyById, getNeighborhoodById, getProperties } from '../../services/dataService';
 import { useFavorites } from '../../context/FavoritesContext';
 import Footer from '../../components/Footer/Footer';
 import PropertyCard from '../../components/PropertyCard/PropertyCard';
@@ -14,16 +15,50 @@ import './PropertyDetails.css';
 
 export default function PropertyDetails() {
   const { id } = useParams();
-  const property = properties.find(p => p.id === parseInt(id)) || properties[0];
-  const neighborhood = neighborhoods.find(n => n.id === property.neighborhoodId);
+  const [property, setProperty] = useState(null);
+  const [neighborhood, setNeighborhood] = useState(null);
+  const [related, setRelated] = useState([]);
+  const [loading, setLoading] = useState(true);
   const { savedProperties, toggleProperty } = useFavorites();
-  const isSaved = savedProperties.includes(property.id);
   const [activeImg, setActiveImg] = useState(0);
   const [contactOpen, setContactOpen] = useState(false);
 
-  const related = properties.filter(p => p.id !== property.id && p.neighborhoodId === property.neighborhoodId).slice(0, 3);
-  const scoreColor = getScoreColor(property.neighborhoodScore);
+  useEffect(() => {
+    const loadProperty = async () => {
+      setLoading(true);
+      const propData = await getPropertyById(id);
+      if (propData) {
+        setProperty(propData);
+        const [neighData, allProps] = await Promise.all([
+          getNeighborhoodById(propData.neighborhoodId),
+          getProperties()
+        ]);
+        setNeighborhood(neighData);
+        if (allProps) {
+          const relatedProps = allProps.filter(p => p.id !== propData.id && p.neighborhoodId === propData.neighborhoodId).slice(0, 3);
+          setRelated(relatedProps);
+        }
+      }
+      setLoading(false);
+    };
+    loadProperty();
+  }, [id]);
 
+  if (loading || !property) {
+    return (
+      <div className="page-wrapper">
+        <div className="container" style={{ paddingTop: 40 }}>
+          <div className="skeleton" style={{ height: 400, marginBottom: 24, width: '100%', borderRadius: 16 }} />
+          <div className="skeleton" style={{ height: 32, marginBottom: 12, width: '60%' }} />
+          <div className="skeleton" style={{ height: 16, marginBottom: 40, width: '40%' }} />
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  const isSaved = savedProperties.includes(property.id);
+  const scoreColor = getScoreColor(property.neighborhoodScore);
   const scoreFactors = neighborhood ? Object.entries(neighborhood.scores) : [];
 
   return (

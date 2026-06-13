@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { Upload, X, ChevronDown, MapPin, Home, CheckCircle } from 'lucide-react';
+import { addProperty } from '../../services/dataService';
 import Footer from '../../components/Footer/Footer';
 import './AddProperty.css';
 
@@ -21,9 +22,48 @@ export default function AddProperty() {
 
   const removeImage = (i) => setImages(prev => prev.filter((_, idx) => idx !== i));
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setSubmitted(true);
+    const formData = new FormData(e.currentTarget);
+    
+    const neighborhoodMap = {
+      'Patia': 1,
+      'Khandagiri': 2,
+      'Chandrasekharpur': 3,
+      'Nayapalli': 4
+    };
+    const nName = formData.get('neighborhoodName');
+    
+    const propertyData = {
+      title: `${formData.get('bedrooms')} BHK ${formData.get('type')}`,
+      type: formData.get('type'),
+      listingType: listingType,
+      price: Number(formData.get('price')),
+      priceUnit: listingType === 'Rent' ? '/month' : '',
+      bedrooms: Number(formData.get('bedrooms')),
+      bathrooms: Number(formData.get('bathrooms')),
+      area: Number(formData.get('area')),
+      furnishing: formData.get('furnishing'),
+      floor: formData.get('floor'),
+      address: formData.get('address'),
+      neighborhoodId: neighborhoodMap[nName] || 1,
+      neighborhoodName: nName,
+      nearestMarket: formData.get('nearestMarket') || '',
+      marketDistance: '0.5 km',
+      neighborhoodScore: nName === 'Patia' ? 8.4 : nName === 'Chandrasekharpur' ? 8.2 : 7.6,
+      description: formData.get('description') || '',
+      ownerName: formData.get('ownerName'),
+      ownerPhone: formData.get('ownerPhone'),
+      images: images,
+    };
+
+    try {
+      await addProperty(propertyData);
+      setSubmitted(true);
+    } catch (err) {
+      console.error("Failed to add property", err);
+      alert("Error adding property. Please try again.");
+    }
   };
 
   if (submitted) {
@@ -108,7 +148,7 @@ export default function AddProperty() {
                   <div className="form-group">
                     <label className="label">Property Type</label>
                     <div className="select-wrap">
-                      <select className="select" required>
+                      <select className="select" name="type" required>
                         <option value="">Select Type</option>
                         <option>Apartment</option>
                         <option>Villa</option>
@@ -132,13 +172,13 @@ export default function AddProperty() {
 
                   <div className="form-group">
                     <label className="label">Price {listingType === 'Rent' ? '(₹/month)' : '(₹)'}</label>
-                    <input className="input" type="number" placeholder={listingType === 'Rent' ? 'e.g. 15000' : 'e.g. 4500000'} required />
+                    <input className="input" name="price" type="number" placeholder={listingType === 'Rent' ? 'e.g. 15000' : 'e.g. 4500000'} required />
                   </div>
 
                   <div className="form-group">
                     <label className="label">Bedrooms</label>
                     <div className="select-wrap">
-                      <select className="select" required>
+                      <select className="select" name="bedrooms" required>
                         <option>1</option>
                         <option>2</option>
                         <option>3</option>
@@ -152,7 +192,7 @@ export default function AddProperty() {
                   <div className="form-group">
                     <label className="label">Bathrooms</label>
                     <div className="select-wrap">
-                      <select className="select" required>
+                      <select className="select" name="bathrooms" required>
                         <option>1</option>
                         <option>2</option>
                         <option>3</option>
@@ -164,13 +204,13 @@ export default function AddProperty() {
 
                   <div className="form-group">
                     <label className="label">Built-up Area (sq.ft)</label>
-                    <input className="input" type="number" placeholder="e.g. 1100" required />
+                    <input className="input" name="area" type="number" placeholder="e.g. 1100" required />
                   </div>
 
                   <div className="form-group">
                     <label className="label">Furnishing</label>
                     <div className="select-wrap">
-                      <select className="select">
+                      <select className="select" name="furnishing">
                         <option>Fully Furnished</option>
                         <option>Semi Furnished</option>
                         <option>Unfurnished</option>
@@ -181,7 +221,7 @@ export default function AddProperty() {
 
                   <div className="form-group">
                     <label className="label">Floor</label>
-                    <input className="input" placeholder="e.g. 3rd Floor" />
+                    <input className="input" name="floor" placeholder="e.g. 3rd Floor" />
                   </div>
                 </div>
               </div>
@@ -196,13 +236,13 @@ export default function AddProperty() {
                     <label className="label">Full Address</label>
                     <div className="input-with-icon">
                       <MapPin size={16} className="input-icon" />
-                      <input className="input has-icon" placeholder="Plot no., Street, Area, City, State" required />
+                      <input className="input has-icon" name="address" placeholder="Plot no., Street, Area, City, State" required />
                     </div>
                   </div>
                   <div className="form-group">
                     <label className="label">Neighborhood</label>
                     <div className="select-wrap">
-                      <select className="select" required>
+                      <select className="select" name="neighborhoodName" required>
                         <option value="">Select Neighborhood</option>
                         <option>Patia</option>
                         <option>Khandagiri</option>
@@ -214,7 +254,7 @@ export default function AddProperty() {
                   </div>
                   <div className="form-group">
                     <label className="label">Nearest Market</label>
-                    <input className="input" placeholder="e.g. Patia Market" />
+                    <input className="input" name="nearestMarket" placeholder="e.g. Patia Market" />
                   </div>
                 </div>
               </div>
@@ -228,6 +268,7 @@ export default function AddProperty() {
                   <label className="label">Property Description</label>
                   <textarea
                     className="textarea"
+                    name="description"
                     rows={5}
                     placeholder="Describe the property, its surroundings, amenities, and what makes it special..."
                     style={{ minHeight: 140 }}
@@ -243,11 +284,11 @@ export default function AddProperty() {
                 <div className="form-grid-2">
                   <div className="form-group">
                     <label className="label">Your Name</label>
-                    <input className="input" placeholder="Full name" required />
+                    <input className="input" name="ownerName" placeholder="Full name" required />
                   </div>
                   <div className="form-group">
                     <label className="label">Phone Number</label>
-                    <input className="input" type="tel" placeholder="+91 98765 43210" required />
+                    <input className="input" name="ownerPhone" type="tel" placeholder="+91 98765 43210" required />
                   </div>
                 </div>
               </div>
