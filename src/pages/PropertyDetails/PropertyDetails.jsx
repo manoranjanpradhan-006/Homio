@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -8,6 +8,9 @@ import {
 } from 'lucide-react';
 import { formatPrice, getScoreColor, getScoreLabel } from '../../data/mockData';
 import { getPropertyById, getNeighborhoodById, getProperties } from '../../services/dataService';
+import { loadGoogleMaps } from '../../utils/mapLoader';
+import { lightMapStyle, darkMapStyle } from '../../utils/mapStyles';
+import { useTheme } from '../../context/ThemeContext';
 import { useFavorites } from '../../context/FavoritesContext';
 import Footer from '../../components/Footer/Footer';
 import PropertyCard from '../../components/PropertyCard/PropertyCard';
@@ -22,6 +25,10 @@ export default function PropertyDetails() {
   const { savedProperties, toggleProperty } = useFavorites();
   const [activeImg, setActiveImg] = useState(0);
   const [contactOpen, setContactOpen] = useState(false);
+
+  const mapRef = useRef(null);
+  const mapInstanceRef = useRef(null);
+  const { theme } = useTheme();
 
   useEffect(() => {
     const loadProperty = async () => {
@@ -43,6 +50,50 @@ export default function PropertyDetails() {
     };
     loadProperty();
   }, [id]);
+
+  useEffect(() => {
+    if (loading || !property || !mapRef.current) return;
+
+    loadGoogleMaps().then((google) => {
+      const latlng = { lat: property.lat || 20.3500, lng: property.lng || 85.8200 };
+      
+      const mapOptions = {
+        center: latlng,
+        zoom: 15,
+        styles: theme === 'dark' ? darkMapStyle : lightMapStyle,
+        disableDefaultUI: true,
+        zoomControl: true,
+      };
+
+      const map = new google.maps.Map(mapRef.current, mapOptions);
+      mapInstanceRef.current = map;
+
+      // Place single marker
+      new google.maps.Marker({
+        position: latlng,
+        map: map,
+        title: property.title,
+        icon: {
+          path: google.maps.SymbolPath.BACKWARD_CLOSED_ARROW,
+          scale: 6,
+          fillColor: "#10b981",
+          fillOpacity: 1,
+          strokeColor: "#ffffff",
+          strokeWeight: 2,
+        }
+      });
+    }).catch(err => {
+      console.warn("Failed to load property location map:", err);
+    });
+  }, [property, loading]);
+
+  useEffect(() => {
+    if (mapInstanceRef.current) {
+      mapInstanceRef.current.setOptions({
+        styles: theme === 'dark' ? darkMapStyle : lightMapStyle
+      });
+    }
+  }, [theme]);
 
   if (loading || !property) {
     return (
@@ -160,17 +211,11 @@ export default function PropertyDetails() {
               </div>
             )}
 
-            {/* Map Placeholder */}
+            {/* Map */}
             <div className="pd-section">
               <h3 className="pd-section-title">Location</h3>
-              <div className="map-placeholder">
-                <div className="map-pin-center">
-                  <MapPin size={32} className="map-pin-icon" />
-                  <p className="map-address">{property.address}</p>
-                  <Link to="/map" className="btn btn-secondary btn-sm">
-                    <Navigation size={14} /> View on Map
-                  </Link>
-                </div>
+              <div className="map-placeholder" style={{ display: 'block', height: 260, padding: 0 }}>
+                <div ref={mapRef} style={{ height: '100%', width: '100%', borderRadius: 16 }} />
               </div>
             </div>
           </div>

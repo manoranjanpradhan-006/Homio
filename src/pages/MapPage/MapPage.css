@@ -98,57 +98,38 @@
   overflow: hidden;
 }
 
-/* Fake Map Background */
+/* Google Map Area */
 .map-bg {
   position: absolute;
   inset: 0;
   background: var(--bg-tertiary);
 }
-[data-theme="light"] .map-bg { background: #e8f0e4; }
-[data-theme="dark"] .map-bg { background: #0d1a0f; }
 
-.map-road {
-  position: absolute;
-  background: var(--bg-secondary);
-  opacity: 0.8;
+.map-fallback-grid {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  font-size: 1rem;
 }
-[data-theme="light"] .map-road { background: #c8d4c0; }
-[data-theme="dark"] .map-road { background: #1a2a1a; }
-.map-road-h { left: 0; right: 0; height: 18px; }
-.map-road-v { top: 0; bottom: 0; width: 18px; }
 
-.map-block {
+/* Floating Property Card Popup */
+.map-floating-popup {
   position: absolute;
-  background: var(--bg-card);
-  border-radius: 4px;
-  opacity: 0.5;
-}
-[data-theme="light"] .map-block { background: #d4e4cc; }
-[data-theme="dark"] .map-block { background: #142014; }
-
-.map-park {
-  position: absolute;
-  border-radius: 4px;
-}
-[data-theme="light"] .map-park { background: #8bc34a30; border: 1px solid #8bc34a50; }
-[data-theme="dark"] .map-park { background: #1a3a0a; border: 1px solid #2a5a1a; }
-
-.map-water {
-  position: absolute;
-  border-radius: 8px;
-}
-[data-theme="light"] .map-water { background: #64b5f640; border: 1px solid #64b5f650; }
-[data-theme="dark"] .map-water { background: #0a1a3a; border: 1px solid #0a2550; }
-
-.map-label {
-  position: absolute;
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: var(--text-tertiary);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  pointer-events: none;
-  white-space: nowrap;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 260px;
+  background: var(--bg-glass);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-xl);
+  border: 1px solid var(--border-strong);
+  overflow: hidden;
+  z-index: 95;
 }
 
 /* Property Pins */
@@ -176,8 +157,7 @@
 
 /* Neighborhood Pins */
 .neighborhood-pin {
-  position: absolute;
-  transform: translate(-50%, -50%);
+  display: inline-block;
   padding: 5px 12px;
   border-radius: var(--radius-full);
   color: white;
@@ -188,7 +168,7 @@
   z-index: 5;
   transition: transform var(--transition-fast);
 }
-.neighborhood-pin:hover { transform: translate(-50%, -50%) scale(1.1); }
+.neighborhood-pin:hover { transform: scale(1.1); }
 
 /* Map Popup */
 .map-popup {

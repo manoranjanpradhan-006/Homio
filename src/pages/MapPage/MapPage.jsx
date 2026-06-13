@@ -1,29 +1,65 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { MapPin, X, SlidersHorizontal, Bed, Bath, Star, ArrowRight, ChevronDown, Home, Navigation } from 'lucide-react';
 import { formatPrice, getScoreColor } from '../../data/mockData';
 import { getProperties, getNeighborhoods } from '../../services/dataService';
+import { loadGoogleMaps, createCustomMarkerClass } from '../../utils/mapLoader';
+import { lightMapStyle, darkMapStyle } from '../../utils/mapStyles';
+import { useTheme } from '../../context/ThemeContext';
 import './MapPage.css';
 
-// Simple map visualization (without actual Leaflet to avoid CSS conflicts)
 export default function MapPage() {
   const [properties, setProperties] = useState([]);
   const [neighborhoods, setNeighborhoods] = useState([]);
   const [selectedProperty, setSelectedProperty] = useState(null);
-  const [hoveredPin, setHoveredPin] = useState(null);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [filterType, setFilterType] = useState('All');
   const [filterScore, setFilterScore] = useState(0);
+  
+  const { theme } = useTheme();
+  const mapContainerRef = useRef(null);
+  const mapInstanceRef = useRef(null);
+  const customMarkersRef = useRef([]);
 
   useEffect(() => {
     const loadMapData = async () => {
       const [pData, nData] = await Promise.all([getProperties(), getNeighborhoods()]);
-      setProperties(pData);
-      setNeighborhoods(nData);
+      setProperties(pData || []);
+      setNeighborhoods(nData || []);
     };
     loadMapData();
   }, []);
+
+  // Initialize Map
+  useEffect(() => {
+    if (!mapContainerRef.current) return;
+
+    loadGoogleMaps().then((google) => {
+      const mapOptions = {
+        center: { lat: 20.3150, lng: 85.8150 }, // Bhubaneswar center
+        zoom: 12.5,
+        styles: theme === 'dark' ? darkMapStyle : lightMapStyle,
+        disableDefaultUI: true,
+        zoomControl: false,
+        gestureHandling: 'cooperative'
+      };
+
+      const map = new google.maps.Map(mapContainerRef.current, mapOptions);
+      mapInstanceRef.current = map;
+    }).catch(err => {
+      console.warn("Failed to load Google Map, falling back to mock UI:", err);
+    });
+  }, []);
+
+  // React to theme changes
+  useEffect(() => {
+    if (mapInstanceRef.current) {
+      mapInstanceRef.current.setOptions({
+        styles: theme === 'dark' ? darkMapStyle : lightMapStyle
+      });
+    }
+  }, [theme]);
 
   const filtered = properties.filter(p => {
     if (filterType !== 'All' && p.listingType !== filterType) return false;
@@ -31,29 +67,88 @@ export default function MapPage() {
     return true;
   });
 
-  // Map positions (normalized 0-100 for our fake map grid)
-  const pinPositions = [
-    { id: 1, x: 42, y: 28, type: 'property' },
-    { id: 2, x: 22, y: 60, type: 'property' },
-    { id: 3, x: 65, y: 38, type: 'property' },
-    { id: 4, x: 48, y: 55, type: 'property' },
-    { id: 5, x: 70, y: 35, type: 'property' },
-    { id: 6, x: 40, y: 25, type: 'property' },
-    { id: 7, x: 72, y: 33, type: 'property' },
-    { id: 8, x: 20, y: 63, type: 'property' },
-  ];
+  // Sync Markers when filtered properties or selection changes
+  useEffect(() => {
+    if (!mapInstanceRef.current || !window.google) return;
 
-  const getNeighborhoodScore = (nId, defaultScore) => {
-    const found = neighborhoods.find(n => n.id === nId);
-    return found ? found.overallScore : defaultScore;
+    const google = window.google;
+    const CustomMarker = createCustomMarkerClass(google);
+
+    // Clear previous custom markers
+    customMarkersRef.current.forEach(m => {
+      if (m.onRemove) m.onRemove();
+    });
+    customMarkersRef.current = [];
+
+    // 1. Add properties markers
+    filtered.forEach((prop) => {
+      if (!prop.lat || !prop.lng) return;
+      const latlng = new google.maps.LatLng(prop.lat, prop.lng);
+      
+      const isActive = selectedProperty?.id === prop.id;
+      const html = `
+        <button class="property-pin ${isActive ? 'active' : ''}">
+          <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-home"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          <span>${formatPrice(prop.price, prop.listingType)}</span>
+        </button>
+      `;
+
+      const marker = new CustomMarker(latlng, mapInstanceRef.current, html, () => {
+        setSelectedProperty(isActive ? null : prop);
+      });
+
+      customMarkersRef.current.push(marker);
+    });
+
+    // 2. Add neighborhood score markers
+    const neighborhoodCoords = {
+      1: { lat: 20.3550, lng: 85.8180 }, // Patia
+      2: { lat: 20.2780, lng: 85.7820 }, // Khandagiri
+      3: { lat: 20.3150, lng: 85.8100 }, // CSP
+      4: { lat: 20.2950, lng: 85.8000 }  // Nayapalli
+    };
+
+    neighborhoods.forEach((neigh) => {
+      const coords = neighborhoodCoords[neigh.id];
+      if (!coords) return;
+      
+      const latlng = new google.maps.LatLng(coords.lat, coords.lng);
+      const scoreColor = getScoreColor(neigh.overallScore);
+      
+      const html = `
+        <a href="#/neighborhoods/${neigh.id}" class="neighborhood-pin" style="background: ${scoreColor}">
+          ${neigh.overallScore}
+        </a>
+      `;
+
+      const marker = new CustomMarker(latlng, mapInstanceRef.current, html, () => {
+        window.location.hash = `/neighborhoods/${neigh.id}`;
+      });
+
+      customMarkersRef.current.push(marker);
+    });
+
+  }, [filtered, selectedProperty, neighborhoods]);
+
+  const handleSelectFromSidebar = (prop) => {
+    setSelectedProperty(prop);
+    if (mapInstanceRef.current && window.google) {
+      mapInstanceRef.current.panTo({ lat: prop.lat, lng: prop.lng });
+      mapInstanceRef.current.setZoom(15);
+    }
   };
 
-  const neighborhoodPins = [
-    { id: 1, x: 40, y: 30, label: 'Patia', score: getNeighborhoodScore(1, 8.4) },
-    { id: 2, x: 20, y: 60, label: 'Khandagiri', score: getNeighborhoodScore(2, 7.6) },
-    { id: 3, x: 65, y: 40, label: 'CSP', score: getNeighborhoodScore(3, 8.2) },
-    { id: 4, x: 50, y: 53, label: 'Nayapalli', score: getNeighborhoodScore(4, 7.6) },
-  ];
+  const handleZoom = (diff) => {
+    if (!mapInstanceRef.current) return;
+    mapInstanceRef.current.setZoom(mapInstanceRef.current.getZoom() + diff);
+  };
+
+  const recenterMap = () => {
+    if (!mapInstanceRef.current) return;
+    mapInstanceRef.current.setCenter({ lat: 20.3150, lng: 85.8150 });
+    mapInstanceRef.current.setZoom(12.5);
+    setSelectedProperty(null);
+  };
 
   return (
     <div className="map-page">
@@ -95,25 +190,13 @@ export default function MapPage() {
                 value={filterScore} onChange={e => setFilterScore(+e.target.value)} />
             </div>
 
-            <div className="filter-group">
-              <label className="label">Property Type</label>
-              <div className="select-wrap">
-                <select className="select">
-                  <option>Any</option>
-                  <option>Apartment</option>
-                  <option>Villa</option>
-                </select>
-                <ChevronDown size={14} className="select-icon" />
-              </div>
-            </div>
-
             <div className="map-listings">
               <div className="map-listings-title">Properties on map</div>
               {filtered.map(p => (
                 <div
                   key={p.id}
                   className={`map-list-item ${selectedProperty?.id === p.id ? 'active' : ''}`}
-                  onClick={() => setSelectedProperty(p)}
+                  onClick={() => handleSelectFromSidebar(p)}
                 >
                   <img src={p.images[0]} alt={p.title} className="map-list-img" />
                   <div>
@@ -123,6 +206,9 @@ export default function MapPage() {
                   </div>
                 </div>
               ))}
+              {filtered.length === 0 && (
+                <p style={{ color: 'var(--text-tertiary)', fontSize: '0.8125rem', padding: '10px 0' }}>No matching properties found.</p>
+              )}
             </div>
           </motion.div>
         )}
@@ -130,95 +216,54 @@ export default function MapPage() {
 
       {/* Map Area */}
       <div className="map-area">
-        {/* Fake map background with city grid */}
-        <div className="map-bg">
-          <div className="map-road map-road-h" style={{ top: '40%' }} />
-          <div className="map-road map-road-h" style={{ top: '65%' }} />
-          <div className="map-road map-road-v" style={{ left: '35%' }} />
-          <div className="map-road map-road-v" style={{ left: '60%' }} />
-          <div className="map-block" style={{ top: '15%', left: '10%', width: '20%', height: '20%' }} />
-          <div className="map-block" style={{ top: '15%', left: '40%', width: '15%', height: '18%' }} />
-          <div className="map-block" style={{ top: '50%', left: '65%', width: '22%', height: '15%' }} />
-          <div className="map-block" style={{ top: '70%', left: '10%', width: '18%', height: '22%' }} />
-          <div className="map-park" style={{ top: '45%', left: '38%', width: '16%', height: '14%' }} />
-          <div className="map-water" style={{ top: '20%', left: '62%', width: '28%', height: '14%' }} />
-          <div className="map-label" style={{ top: '42%', left: '40%' }}>Patia</div>
-          <div className="map-label" style={{ top: '57%', left: '22%' }}>Khandagiri</div>
-          <div className="map-label" style={{ top: '35%', left: '63%' }}>CSP</div>
-          <div className="map-label" style={{ top: '52%', left: '50%' }}>Nayapalli</div>
+        {/* Google Map Div Ref */}
+        <div ref={mapContainerRef} className="map-bg">
+          {/* Fallback mock map container shown only when API fails to load */}
+          <div className="map-fallback-grid">
+            <div className="map-label" style={{ top: '42%', left: '40%' }}>Loading Google Maps...</div>
+          </div>
         </div>
 
-        {/* Neighborhood Score Pins */}
-        {neighborhoodPins.map(pin => (
-          <Link
-            key={pin.id}
-            to={`/neighborhoods/${pin.id}`}
-            className="neighborhood-pin"
-            style={{ left: `${pin.x}%`, top: `${pin.y}%`, background: getScoreColor(pin.score) }}
-          >
-            {pin.score}
-          </Link>
-        ))}
-
-        {/* Property Pins */}
-        {filtered.map((prop, i) => {
-          const pos = pinPositions.find(p => p.id === prop.id) || { x: 30 + i * 5, y: 30 + i * 8 };
-          return (
-            <div key={prop.id} style={{ position: 'absolute', left: `${pos.x}%`, top: `${pos.y}%`, zIndex: selectedProperty?.id === prop.id ? 20 : 10 }}>
-              <motion.button
-                className={`property-pin ${selectedProperty?.id === prop.id ? 'active' : ''}`}
-                onClick={() => setSelectedProperty(selectedProperty?.id === prop.id ? null : prop)}
-                whileHover={{ scale: 1.15 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <Home size={11} />
-                {formatPrice(prop.price, prop.listingType)}
-              </motion.button>
-
-              {/* Popup */}
-              <AnimatePresence>
-                {selectedProperty?.id === prop.id && (
-                  <motion.div
-                    className="map-popup"
-                    initial={{ opacity: 0, y: 10, scale: 0.9 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.9 }}
-                    transition={{ duration: 0.15 }}
-                  >
-                    <button className="popup-close" onClick={() => setSelectedProperty(null)}><X size={12} /></button>
-                    <img src={prop.images[0]} alt={prop.title} className="popup-img" />
-                    <div className="popup-body">
-                      <div className="popup-price">{formatPrice(prop.price, prop.listingType)}</div>
-                      <div className="popup-title">{prop.title}</div>
-                      <div className="popup-loc"><MapPin size={11} />{prop.neighborhoodName}</div>
-                      <div className="popup-specs">
-                        <span><Bed size={11} />{prop.bedrooms}</span>
-                        <span><Bath size={11} />{prop.bathrooms}</span>
-                        <span><Star size={11} />{prop.neighborhoodScore}</span>
-                      </div>
-                      <Link to={`/property/${prop.id}`} className="popup-btn">
-                        View Details <ArrowRight size={12} />
-                      </Link>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          );
-        })}
+        {/* Floating Property Card Popup */}
+        <AnimatePresence>
+          {selectedProperty && (
+            <motion.div
+              className="map-floating-popup"
+              initial={{ opacity: 0, y: 40, x: '-50%' }}
+              animate={{ opacity: 1, y: 0, x: '-50%' }}
+              exit={{ opacity: 0, y: 20, x: '-50%' }}
+              transition={{ duration: 0.25 }}
+            >
+              <button className="popup-close" onClick={() => setSelectedProperty(null)}><X size={12} /></button>
+              <img src={selectedProperty.images[0]} alt={selectedProperty.title} className="popup-img" />
+              <div className="popup-body">
+                <div className="popup-price">{formatPrice(selectedProperty.price, selectedProperty.listingType)}</div>
+                <div className="popup-title">{selectedProperty.title}</div>
+                <div className="popup-loc"><MapPin size={11} />{selectedProperty.neighborhoodName}</div>
+                <div className="popup-specs">
+                  <span><Bed size={11} />{selectedProperty.bedrooms} Beds</span>
+                  <span><Bath size={11} />{selectedProperty.bathrooms} Baths</span>
+                  <span><Star size={11} />{selectedProperty.neighborhoodScore} Score</span>
+                </div>
+                <Link to={`/property/${selectedProperty.id}`} className="popup-btn">
+                  View Details <ArrowRight size={12} />
+                </Link>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Zoom Controls */}
         <div className="map-zoom-controls">
-          <button className="zoom-btn">+</button>
-          <button className="zoom-btn">−</button>
-          <button className="zoom-btn"><Navigation size={14} /></button>
+          <button className="zoom-btn" onClick={() => handleZoom(1)}>+</button>
+          <button className="zoom-btn" onClick={() => handleZoom(-1)}>−</button>
+          <button className="zoom-btn" onClick={recenterMap}><Navigation size={14} /></button>
         </div>
 
         {/* Legend */}
         <div className="map-legend">
           <div className="legend-item"><div className="legend-dot property-dot" /><span>Property</span></div>
           <div className="legend-item"><div className="legend-dot score-dot" /><span>Neighborhood Score</span></div>
-          <div className="legend-item"><div className="legend-block park-dot" /><span>Park/Green</span></div>
         </div>
       </div>
     </div>
