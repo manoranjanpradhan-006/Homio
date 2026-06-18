@@ -194,3 +194,16 @@
 .sort-custom-select {
   min-width: 155px;
 }
+
+/* Mobile filter drawer backdrop overlay */
+.drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  background: var(--bg-overlay);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 850;
+}
+.mobile-filter-drawer {
+  z-index: 900;
+}

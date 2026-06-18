@@ -8,6 +8,8 @@ import NeighborhoodCard from '../../components/NeighborhoodCard/NeighborhoodCard
 import Footer from '../../components/Footer/Footer';
 import './Landing.css';
 
+import Loader from '../../components/Loader/Loader';
+
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
   visible: { opacity: 1, y: 0 },
@@ -22,15 +24,22 @@ export default function Landing() {
   const navigate = useNavigate();
   const [neighborhoods, setNeighborhoods] = useState([]);
   const [properties, setProperties] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const loadData = async () => {
+      setLoading(true);
       const [nData, pData] = await Promise.all([getNeighborhoods(), getProperties()]);
-      setNeighborhoods(nData);
-      setProperties(pData);
+      setNeighborhoods(nData || []);
+      setProperties(pData || []);
+      setLoading(false);
     };
     loadData();
   }, []);
+
+  if (loading) {
+    return <Loader message="Loading Homio Neighborhood Insights..." />;
+  }
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -166,29 +175,7 @@ export default function Landing() {
                 </div>
               </div>
 
-              {/* Floating cards */}
-              <motion.div
-                className="float-card float-card-1"
-                animate={{ y: [0, -8, 0] }}
-                transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-              >
-                <div className="float-card-icon"><Home size={16} /></div>
-                <div>
-                  <div className="float-card-title">₹15,000/mo</div>
-                  <div className="float-card-sub">2 BHK · Patia, BBSR</div>
-                </div>
-              </motion.div>
-              <motion.div
-                className="float-card float-card-2"
-                animate={{ y: [0, 8, 0] }}
-                transition={{ duration: 3.5, repeat: Infinity, ease: 'easeInOut', delay: 0.5 }}
-              >
-                <div className="float-score">8.4</div>
-                <div>
-                  <div className="float-card-title">Neighborhood Score</div>
-                  <div className="float-card-sub">Patia, Bhubaneswar</div>
-                </div>
-              </motion.div>
+              {/* Floating cards removed as requested */}
             </div>
           </motion.div>
         </div>

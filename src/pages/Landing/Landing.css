@@ -161,39 +161,7 @@
   box-shadow: var(--shadow-xl);
 }
 
-.float-card {
-  position: absolute;
-  background: var(--bg-glass);
-  backdrop-filter: blur(16px);
-  border: 1px solid rgba(255,255,255,0.2);
-  border-radius: var(--radius-lg);
-  padding: 12px 16px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  box-shadow: var(--shadow-lg);
-  min-width: 180px;
-}
-.float-card-1 { bottom: 60px; left: -30px; }
-.float-card-2 { top: 40px; right: -20px; }
-
-.float-card-icon {
-  width: 36px; height: 36px;
-  background: var(--brand-gradient);
-  border-radius: var(--radius-md);
-  display: flex; align-items: center; justify-content: center;
-  color: white;
-  flex-shrink: 0;
-}
-.float-score {
-  font-family: 'Outfit', sans-serif;
-  font-size: 1.5rem;
-  font-weight: 900;
-  color: var(--brand-primary);
-  flex-shrink: 0;
-}
-.float-card-title { font-size: 0.875rem; font-weight: 700; color: var(--text-primary); }
-.float-card-sub { font-size: 0.75rem; color: var(--text-secondary); margin-top: 2px; }
+/* Floating cards styles removed */
 
 /* Feature Cards */
 .features-section { padding-top: 40px; }
@@ -284,17 +252,25 @@
   .features-grid { grid-template-columns: repeat(3, 1fr); }
 }
 @media (max-width: 900px) {
-  .hero-container { grid-template-columns: 1fr; gap: 40px; }
-  .hero-visual { display: none; }
-  .hero { padding-top: 120px; }
+  .hero-container { grid-template-columns: 1fr; gap: 48px; text-align: center; }
+  .hero-eyebrow { margin: 0 auto; }
+  .hero-quick { justify-content: center; }
+  .hero-stats { justify-content: center; }
+  .hero-visual { display: block !important; max-width: 500px; margin: 0 auto; width: 100%; }
+  .hero-visual-dashboard { height: auto; min-height: 380px; padding: 24px; overflow: hidden; }
+  .hero { padding-top: 110px; padding-bottom: 40px; }
   .features-grid { grid-template-columns: 1fr; }
 }
 @media (max-width: 640px) {
-  .neighborhoods-grid { grid-template-columns: 1fr 1fr; }
   .homes-grid { grid-template-columns: 1fr; }
   .hero-stats { gap: 16px; }
   .cta-banner { padding: 36px 28px; }
   .cta-content h2 { font-size: 1.5rem; }
+}
+@media (max-width: 500px) {
+  .neighborhoods-grid { grid-template-columns: 1fr; }
+  .hero-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .hero-stat { align-items: center; }
 }
 
 /* Hero Visual Dashboard */

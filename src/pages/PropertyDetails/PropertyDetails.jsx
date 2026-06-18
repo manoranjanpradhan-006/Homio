@@ -14,6 +14,7 @@ import { useTheme } from '../../context/ThemeContext';
 import { useFavorites } from '../../context/FavoritesContext';
 import Footer from '../../components/Footer/Footer';
 import PropertyCard from '../../components/PropertyCard/PropertyCard';
+import Loader from '../../components/Loader/Loader';
 import './PropertyDetails.css';
 
 export default function PropertyDetails() {
@@ -96,16 +97,7 @@ export default function PropertyDetails() {
   }, [theme]);
 
   if (loading || !property) {
-    return (
-      <div className="page-wrapper">
-        <div className="container" style={{ paddingTop: 40 }}>
-          <div className="skeleton" style={{ height: 400, marginBottom: 24, width: '100%', borderRadius: 16 }} />
-          <div className="skeleton" style={{ height: 32, marginBottom: 12, width: '60%' }} />
-          <div className="skeleton" style={{ height: 16, marginBottom: 40, width: '40%' }} />
-        </div>
-        <Footer />
-      </div>
-    );
+    return <Loader message="Fetching property listings and neighborhood grades..." />;
   }
 
   const isSaved = savedProperties.includes(property.id);

@@ -134,7 +134,7 @@ export default function Navbar() {
             </button>
 
             {/* Mobile Menu */}
-            <button className="btn-icon nav-icon-btn" onClick={() => setMobileOpen(!mobileOpen)} style={{ display: 'none' }} aria-label="Menu" id="mobile-menu-btn">
+            <button className="btn-icon nav-icon-btn" onClick={() => setMobileOpen(!mobileOpen)} aria-label="Menu" id="mobile-menu-btn">
               {mobileOpen ? <X size={20} /> : <Menu size={20} />}
             </button>
           </div>

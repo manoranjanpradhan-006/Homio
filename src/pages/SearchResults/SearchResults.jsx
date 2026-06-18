@@ -5,6 +5,7 @@ import { getProperties } from '../../services/dataService';
 import PropertyCard from '../../components/PropertyCard/PropertyCard';
 import Footer from '../../components/Footer/Footer';
 import CustomSelect from '../../components/CustomSelect/CustomSelect';
+import Loader from '../../components/Loader/Loader';
 import './SearchResults.css';
 
 const PER_PAGE = 6;
@@ -19,11 +20,14 @@ export default function SearchResults() {
   const [sort, setSort] = useState('score');
   const [page, setPage] = useState(1);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchProps = async () => {
+      setLoading(true);
       const data = await getProperties();
-      setProperties(data);
+      setProperties(data || []);
+      setLoading(false);
     };
     fetchProps();
   }, []);
@@ -46,6 +50,10 @@ export default function SearchResults() {
   }, [filters, sort, properties]);
 
   const paginated = filtered;
+
+  if (loading) {
+    return <Loader message="Finding homes and verifying pricing..." />;
+  }
 
   const FilterSidebar = () => (
     <aside className="filter-sidebar">
@@ -160,16 +168,25 @@ export default function SearchResults() {
         {/* Mobile Filters Drawer */}
         <AnimatePresence>
           {mobileFiltersOpen && (
-            <motion.div className="mobile-filter-drawer"
-              initial={{ x: '-100%' }} animate={{ x: 0 }} exit={{ x: '-100%' }}
-              transition={{ duration: 0.3 }}
-            >
-              <div className="mobile-filter-close">
-                <span>Filters</span>
-                <button onClick={() => setMobileFiltersOpen(false)}><X size={20} /></button>
-              </div>
-              <FilterSidebar />
-            </motion.div>
+            <>
+              <motion.div 
+                className="drawer-backdrop"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setMobileFiltersOpen(false)}
+              />
+              <motion.div className="mobile-filter-drawer"
+                initial={{ x: '-100%' }} animate={{ x: 0 }} exit={{ x: '-100%' }}
+                transition={{ duration: 0.3 }}
+              >
+                <div className="mobile-filter-close">
+                  <span>Filters</span>
+                  <button onClick={() => setMobileFiltersOpen(false)}><X size={20} /></button>
+                </div>
+                <FilterSidebar />
+              </motion.div>
+            </>
           )}
         </AnimatePresence>
 

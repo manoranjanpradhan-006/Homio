@@ -13,6 +13,7 @@ import PropertyCard from '../../components/PropertyCard/PropertyCard';
 import NeighborhoodCard from '../../components/NeighborhoodCard/NeighborhoodCard';
 import Footer from '../../components/Footer/Footer';
 import { X, Plus } from 'lucide-react';
+import Loader from '../../components/Loader/Loader';
 import './NeighborhoodDetails.css';
 
 const scoreKeys = [
@@ -168,16 +169,7 @@ export default function NeighborhoodDetails() {
   }, [id]);
 
   if (loading) {
-    return (
-      <div className="page-wrapper">
-        <div className="container" style={{ paddingTop: 40 }}>
-          <div className="skeleton" style={{ height: 300, marginBottom: 24, width: '100%', borderRadius: 16 }} />
-          <div className="skeleton" style={{ height: 32, marginBottom: 12, width: '60%' }} />
-          <div className="skeleton" style={{ height: 16, marginBottom: 40, width: '40%' }} />
-        </div>
-        <Footer />
-      </div>
-    );
+    return <Loader message="Analyzing neighborhood metrics..." />;
   }
 
   if (!id) {

@@ -7,6 +7,7 @@ import { getNeighborhoods, getProperties } from '../../services/dataService';
 import NeighborhoodCard from '../../components/NeighborhoodCard/NeighborhoodCard';
 import PropertyCard from '../../components/PropertyCard/PropertyCard';
 import Footer from '../../components/Footer/Footer';
+import Loader from '../../components/Loader/Loader';
 import './Compare.css';
 
 const scoreRows = [
@@ -76,6 +77,10 @@ export default function Compare() {
     };
     fetchData();
   }, []);
+
+  if (loading) {
+    return <Loader message="Analyzing properties and neighborhoods..." />;
+  }
 
   // Neighborhood comparison helpers
   const addNeighborhood = (n) => {
