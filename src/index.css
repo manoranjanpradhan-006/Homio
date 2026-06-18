@@ -22,18 +22,18 @@ body {
    ============================================================ */
 :root, [data-theme="light"] {
   /* Backgrounds */
-  --bg-primary:      #f8f9fb;
+  --bg-primary:      #f3f6f4;
   --bg-secondary:    #ffffff;
-  --bg-tertiary:     #f1f3f6;
-  --bg-card:         #ffffff;
-  --bg-glass:        rgba(255, 255, 255, 0.75);
+  --bg-tertiary:     #e6ebe7;
+  --bg-card:         rgba(255, 255, 255, 0.75);
+  --bg-glass:        rgba(243, 246, 244, 0.75);
   --bg-glass-dark:   rgba(255, 255, 255, 0.4);
-  --bg-overlay:      rgba(0, 0, 0, 0.5);
+  --bg-overlay:      rgba(0, 0, 0, 0.4);
 
   /* Text */
-  --text-primary:    #0f172a;
-  --text-secondary:  #475569;
-  --text-tertiary:   #94a3b8;
+  --text-primary:    #0f1a14;
+  --text-secondary:  #404c45;
+  --text-tertiary:   #8a958e;
   --text-inverse:    #ffffff;
 
   /* Brand / Accent */
@@ -49,10 +49,10 @@ body {
   --accent-orange:   #f59e0b;
   --accent-red:      #ef4444;
 
-  /* Borders */
-  --border-default:  #e2e8f0;
-  --border-subtle:   #f1f5f9;
-  --border-strong:   #cbd5e1;
+  /* Borders - Tinted with translucent emerald */
+  --border-default:  rgba(16, 185, 129, 0.15);
+  --border-subtle:   rgba(16, 185, 129, 0.08);
+  --border-strong:   rgba(16, 185, 129, 0.25);
 
   /* Shadows */
   --shadow-xs:       0 1px 2px rgba(0,0,0,0.05);
@@ -63,8 +63,8 @@ body {
   --shadow-brand:    0 8px 24px rgba(16,185,129,0.25);
 
   /* Navbar */
-  --nav-bg:          rgba(255,255,255,0.88);
-  --nav-border:      rgba(226,232,240,0.8);
+  --nav-bg:          rgba(243, 246, 244, 0.85);
+  --nav-border:      rgba(16, 185, 129, 0.1);
 
   /* Score Colors */
   --score-excellent: #10b981;
@@ -98,7 +98,7 @@ body {
   --bg-primary:      #080f1a;
   --bg-secondary:    #0d1829;
   --bg-tertiary:     #111f35;
-  --bg-card:         #0f1e31;
+  --bg-card:         rgba(15, 30, 49, 0.75);
   --bg-glass:        rgba(13, 24, 41, 0.8);
   --bg-glass-dark:   rgba(8, 15, 26, 0.6);
   --bg-overlay:      rgba(0, 0, 0, 0.7);
@@ -130,7 +130,7 @@ body {
   --shadow-xl:       0 16px 48px rgba(0,0,0,0.7);
   --shadow-brand:    0 8px 24px rgba(16,185,129,0.3);
 
-  --nav-bg:          rgba(8, 15, 26, 0.9);
+  --nav-bg:          rgba(8, 15, 26, 0.85);
   --nav-border:      rgba(255,255,255,0.06);
 }
 
@@ -254,6 +254,8 @@ h1,h2,h3,h4,h5,h6 { font-family: 'Outfit', sans-serif; font-weight: 700; line-he
    ============================================================ */
 .card {
   background: var(--bg-card);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border: 1px solid var(--border-default);
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-sm);
@@ -269,8 +271,14 @@ h1,h2,h3,h4,h5,h6 { font-family: 'Outfit', sans-serif; font-weight: 700; line-he
   background: var(--bg-glass);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255,255,255,0.15);
+  border: 1px solid var(--border-default);
   border-radius: var(--radius-xl);
+}
+
+/* Global Card Glassmorphism enforcement rule */
+.card, .glass-card, .score-card, .quick-stats, .nd-compare-cta, .feature-card, .property-card, .ai-card, .ai-reco-card {
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
 }
 
 /* ============================================================
@@ -526,3 +534,55 @@ h1,h2,h3,h4,h5,h6 { font-family: 'Outfit', sans-serif; font-weight: 700; line-he
 @media (max-width: 480px) {
   .hide-sm { display: none !important; }
 }
+
+/* ============================================================
+   GLOBAL BACKGROUND (BLOBS & GRID)
+   ============================================================ */
+.hero-bg {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+  overflow: hidden;
+}
+
+.hero-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.25;
+}
+.blob-1 {
+  width: 600px; height: 600px;
+  top: -100px; right: -100px;
+  background: radial-gradient(circle, #10b981, #0ea5e9);
+  animation: blobFloat 8s ease-in-out infinite;
+}
+.blob-2 {
+  width: 400px; height: 400px;
+  bottom: -80px; left: 200px;
+  background: radial-gradient(circle, #8b5cf6, #0ea5e9);
+  animation: blobFloat 10s ease-in-out infinite reverse;
+}
+.blob-3 {
+  width: 300px; height: 300px;
+  top: 200px; left: -80px;
+  background: radial-gradient(circle, #10b981, #f59e0b);
+  animation: blobFloat 6s ease-in-out infinite;
+}
+
+@keyframes blobFloat {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(20px, -20px) scale(1.05); }
+}
+
+.hero-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(var(--border-subtle) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border-subtle) 1px, transparent 1px);
+  background-size: 60px 60px;
+  opacity: 0.5;
+}
+

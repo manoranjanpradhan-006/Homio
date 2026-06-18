@@ -10,7 +10,7 @@ const navLinks = [
   { to: '/', label: 'Home', icon: Home },
   { to: '/search', label: 'Search Homes', icon: Search },
   { to: '/map', label: 'Map', icon: Map },
-  { to: '/neighborhoods/1', label: 'Neighborhoods', icon: MapPin },
+  { to: '/neighborhoods', label: 'Neighborhoods', icon: MapPin },
   { to: '/compare', label: 'Compare', icon: GitCompare },
   { to: '/reviews/1', label: 'Reviews', icon: Star },
 ];

@@ -37,19 +37,12 @@ export default function Landing() {
     navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
   };
 
-  const featuredProperties = properties.filter(p => p.isFeatured).slice(0, 4);
+  const featuredProperties = properties.filter(p => p.isFeatured).slice(0, 8);
 
   return (
     <div className="page-wrapper">
       {/* ====== HERO ====== */}
       <section className="hero">
-        <div className="hero-bg">
-          <div className="hero-blob blob-1" />
-          <div className="hero-blob blob-2" />
-          <div className="hero-blob blob-3" />
-          <div className="hero-grid" />
-        </div>
-
         <div className="container hero-container">
           <motion.div
             className="hero-content"
@@ -121,19 +114,58 @@ export default function Landing() {
             </motion.div>
           </motion.div>
 
-          {/* Hero Image */}
           <motion.div
             className="hero-visual"
             initial={{ opacity: 0, x: 40 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.3, duration: 0.6 }}
           >
-            <div className="hero-img-container">
-              <img
-                src="https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=900&q=85"
-                alt="Premium homes"
-                className="hero-img"
-              />
+            <div className="hero-visual-dashboard">
+              <div className="visual-db-header">
+                <Sparkles size={16} className="visual-db-spark" />
+                <span className="visual-db-title">AI Assessment Engine</span>
+                <span className="visual-db-live">LIVE INDEX</span>
+              </div>
+              
+              <div className="visual-db-console">
+                <span className="console-prompt">&gt; homio --assess "Patia, BBSR"</span>
+                <p className="console-text">"Patia is an exceptionally safe family-centric neighborhood with top tier schools (DAV, SAI) and high-speed fiber."</p>
+              </div>
+
+              <div className="visual-db-stats">
+                <div className="visual-db-row">
+                  <div className="vdb-label">🛡️ Safety Score</div>
+                  <div className="progress-bar" style={{ height: 6 }}>
+                    <motion.div className="progress-fill" style={{ width: '90%', background: '#10b981' }} initial={{ width: 0 }} animate={{ width: '90%' }} transition={{ duration: 1, delay: 0.5 }} />
+                  </div>
+                  <div className="vdb-value" style={{ color: '#10b981' }}>9.0</div>
+                </div>
+
+                <div className="visual-db-row">
+                  <div className="vdb-label">🎓 School Grade</div>
+                  <div className="progress-bar" style={{ height: 6 }}>
+                    <motion.div className="progress-fill" style={{ width: '80%', background: '#10b981' }} initial={{ width: 0 }} animate={{ width: '80%' }} transition={{ duration: 1, delay: 0.7 }} />
+                  </div>
+                  <div className="vdb-value" style={{ color: '#10b981' }}>8.0</div>
+                </div>
+
+                <div className="visual-db-row">
+                  <div className="vdb-label">🏥 Health Facilities</div>
+                  <div className="progress-bar" style={{ height: 6 }}>
+                    <motion.div className="progress-fill" style={{ width: '90%', background: '#10b981' }} initial={{ width: 0 }} animate={{ width: '90%' }} transition={{ duration: 1, delay: 0.9 }} />
+                  </div>
+                  <div className="vdb-value" style={{ color: '#10b981' }}>9.0</div>
+                </div>
+
+                <div className="visual-db-row">
+                  <div className="vdb-label">🚗 Traffic Flow</div>
+                  <div className="progress-bar" style={{ height: 6 }}>
+                    <motion.div className="progress-fill" style={{ width: '70%', background: '#f59e0b' }} initial={{ width: 0 }} animate={{ width: '70%' }} transition={{ duration: 1, delay: 1.1 }} />
+                  </div>
+                  <div className="vdb-value" style={{ color: '#f59e0b' }}>7.0</div>
+                </div>
+              </div>
+
               {/* Floating cards */}
               <motion.div
                 className="float-card float-card-1"
@@ -192,7 +224,7 @@ export default function Landing() {
                 color: '#f59e0b',
                 title: 'AI Insights',
                 desc: 'AI-generated neighborhood analysis to help you make smarter decisions.',
-                link: '/neighborhoods/1',
+                link: '/neighborhoods',
               },
             ].map((f, i) => (
               <motion.div
@@ -223,7 +255,7 @@ export default function Landing() {
               <h2 className="section-title">Popular Neighborhoods</h2>
               <p className="section-subtitle">Top-rated areas based on resident reviews and AI analysis</p>
             </div>
-            <Link to="/compare" className="section-link hide-mobile">
+            <Link to="/neighborhoods" className="section-link hide-mobile">
               View all <ArrowRight size={14} />
             </Link>
           </div>

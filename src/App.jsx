@@ -18,12 +18,19 @@ function App() {
     <ThemeProvider>
       <FavoritesProvider>
         <BrowserRouter>
+          <div className="hero-bg">
+            <div className="hero-blob blob-1" />
+            <div className="hero-blob blob-2" />
+            <div className="hero-blob blob-3" />
+            <div className="hero-grid" />
+          </div>
           <Navbar />
           <Routes>
             <Route path="/" element={<Landing />} />
             <Route path="/search" element={<SearchResults />} />
             <Route path="/property/:id" element={<PropertyDetails />} />
             <Route path="/map" element={<MapPage />} />
+            <Route path="/neighborhoods" element={<NeighborhoodDetails />} />
             <Route path="/neighborhoods/:id" element={<NeighborhoodDetails />} />
             <Route path="/compare" element={<Compare />} />
             <Route path="/reviews/:id" element={<Reviews />} />

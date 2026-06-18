@@ -99,6 +99,28 @@ const uploadImageToStorage = async (imageSrc) => {
   }
 };
 
+// Helper to wrap promises with a timeout limit for resilient loading speeds
+const withTimeout = async (promise, fallback, ms = 1000) => {
+  let timeoutId;
+  const timeoutPromise = new Promise((resolve) => {
+    timeoutId = setTimeout(() => {
+      console.warn("[DataService] Firestore request timed out, falling back to local simulation.");
+      resolve(fallback);
+    }, ms);
+  });
+  try {
+    const result = await Promise.race([
+      promise,
+      timeoutPromise
+    ]);
+    clearTimeout(timeoutId);
+    return result;
+  } catch (error) {
+    clearTimeout(timeoutId);
+    throw error;
+  }
+};
+
 /**
  * Fetch all neighborhoods. Falls back to mock data if Firestore is not configured or queries fail.
  */
@@ -108,17 +130,19 @@ export const getNeighborhoods = async () => {
     return localNeighborhoods;
   }
   try {
-    const querySnapshot = await getDocs(collection(db, 'neighborhoods'));
-    if (querySnapshot.empty) {
-      console.log("[DataService] Neighborhoods collection is empty. Falling back to mock data.");
-      return localNeighborhoods;
-    }
-    const list = [];
-    querySnapshot.forEach((doc) => {
-      list.push(docToData(doc));
-    });
-    // Sort by ID to maintain consistent order
-    return list.sort((a, b) => a.id - b.id);
+    const fetchPromise = (async () => {
+      const querySnapshot = await getDocs(collection(db, 'neighborhoods'));
+      if (querySnapshot.empty) {
+        console.log("[DataService] Neighborhoods collection is empty. Falling back to mock data.");
+        return localNeighborhoods;
+      }
+      const list = [];
+      querySnapshot.forEach((doc) => {
+        list.push(docToData(doc));
+      });
+      return list.sort((a, b) => a.id - b.id);
+    })();
+    return await withTimeout(fetchPromise, localNeighborhoods, 1000);
   } catch (error) {
     console.error("[DataService] Error fetching neighborhoods from Firestore:", error);
     return localNeighborhoods;
@@ -130,20 +154,23 @@ export const getNeighborhoods = async () => {
  */
 export const getNeighborhoodById = async (id) => {
   const targetId = String(id);
+  const fallbackVal = localNeighborhoods.find(n => String(n.id) === targetId);
   if (!isConfigured || !db) {
-    return localNeighborhoods.find(n => String(n.id) === targetId);
+    return fallbackVal;
   }
   try {
-    const docRef = doc(db, 'neighborhoods', targetId);
-    const docSnap = await getDoc(docRef);
-    if (docSnap.exists()) {
-      return docToData(docSnap);
-    }
-    // Try matching numeric or string ID in mock data
-    return localNeighborhoods.find(n => String(n.id) === targetId);
+    const fetchPromise = (async () => {
+      const docRef = doc(db, 'neighborhoods', targetId);
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        return docToData(docSnap);
+      }
+      return fallbackVal;
+    })();
+    return await withTimeout(fetchPromise, fallbackVal, 1000);
   } catch (error) {
     console.error(`[DataService] Error fetching neighborhood ${id}:`, error);
-    return localNeighborhoods.find(n => String(n.id) === targetId);
+    return fallbackVal;
   }
 };
 
@@ -156,16 +183,19 @@ export const getProperties = async () => {
     return localProperties;
   }
   try {
-    const querySnapshot = await getDocs(collection(db, 'properties'));
-    if (querySnapshot.empty) {
-      console.log("[DataService] Properties collection is empty. Falling back to mock data.");
-      return localProperties;
-    }
-    const list = [];
-    querySnapshot.forEach((doc) => {
-      list.push(docToData(doc));
-    });
-    return list.sort((a, b) => a.id - b.id);
+    const fetchPromise = (async () => {
+      const querySnapshot = await getDocs(collection(db, 'properties'));
+      if (querySnapshot.empty) {
+        console.log("[DataService] Properties collection is empty. Falling back to mock data.");
+        return localProperties;
+      }
+      const list = [];
+      querySnapshot.forEach((doc) => {
+        list.push(docToData(doc));
+      });
+      return list.sort((a, b) => a.id - b.id);
+    })();
+    return await withTimeout(fetchPromise, localProperties, 1000);
   } catch (error) {
     console.error("[DataService] Error fetching properties from Firestore:", error);
     return localProperties;
@@ -177,19 +207,23 @@ export const getProperties = async () => {
  */
 export const getPropertyById = async (id) => {
   const targetId = String(id);
+  const fallbackVal = localProperties.find(p => String(p.id) === targetId);
   if (!isConfigured || !db) {
-    return localProperties.find(p => String(p.id) === targetId);
+    return fallbackVal;
   }
   try {
-    const docRef = doc(db, 'properties', targetId);
-    const docSnap = await getDoc(docRef);
-    if (docSnap.exists()) {
-      return docToData(docSnap);
-    }
-    return localProperties.find(p => String(p.id) === targetId);
+    const fetchPromise = (async () => {
+      const docRef = doc(db, 'properties', targetId);
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        return docToData(docSnap);
+      }
+      return fallbackVal;
+    })();
+    return await withTimeout(fetchPromise, fallbackVal, 1000);
   } catch (error) {
     console.error(`[DataService] Error fetching property ${id}:`, error);
-    return localProperties.find(p => String(p.id) === targetId);
+    return fallbackVal;
   }
 };
 
@@ -198,27 +232,27 @@ export const getPropertyById = async (id) => {
  */
 export const getReviews = async (neighborhoodId) => {
   const targetNeighborhoodId = Number(neighborhoodId);
+  const fallbackVal = localReviews.filter(r => r.neighborhoodId === targetNeighborhoodId);
   if (!isConfigured || !db) {
-    return localReviews.filter(r => r.neighborhoodId === targetNeighborhoodId);
+    return fallbackVal;
   }
   try {
-    const q = query(collection(db, 'reviews'), where('neighborhoodId', '==', targetNeighborhoodId));
-    const querySnapshot = await getDocs(q);
-    
-    // If empty in Firestore, but we have them in mock data, return mock data
-    if (querySnapshot.empty) {
-      const mockResult = localReviews.filter(r => r.neighborhoodId === targetNeighborhoodId);
-      if (mockResult.length > 0) return mockResult;
-    }
-    
-    const list = [];
-    querySnapshot.forEach((doc) => {
-      list.push(docToData(doc));
-    });
-    return list;
+    const fetchPromise = (async () => {
+      const q = query(collection(db, 'reviews'), where('neighborhoodId', '==', targetNeighborhoodId));
+      const querySnapshot = await getDocs(q);
+      if (querySnapshot.empty) {
+        return fallbackVal;
+      }
+      const list = [];
+      querySnapshot.forEach((doc) => {
+        list.push(docToData(doc));
+      });
+      return list;
+    })();
+    return await withTimeout(fetchPromise, fallbackVal, 1000);
   } catch (error) {
     console.error(`[DataService] Error fetching reviews for neighborhood ${neighborhoodId}:`, error);
-    return localReviews.filter(r => r.neighborhoodId === targetNeighborhoodId);
+    return fallbackVal;
   }
 };
 
@@ -350,6 +384,41 @@ export const addReview = async (reviewData) => {
     }
     return simulated;
   }
+};
+
+/**
+ * Add a new neighborhood/location to the database.
+ */
+export const addNeighborhood = async (neighborhoodData) => {
+  const newNeighborhood = {
+    ...neighborhoodData,
+    id: localNeighborhoods.length + 1,
+    scores: neighborhoodData.scores || { safety: 8.0, traffic: 7.0, schools: 7.5, hospitals: 8.0, internet: 8.0, airQuality: 7.5, costOfLiving: 7.5 },
+    overallScore: parseFloat(neighborhoodData.overallScore) || 7.5,
+    population: neighborhoodData.population || "10,000+",
+    image: neighborhoodData.image || "https://images.unsplash.com/photo-1486325212027-8081e485255e?w=600&q=80",
+    aiSummary: neighborhoodData.aiSummary || `${neighborhoodData.name} is a newly added area in ${neighborhoodData.city}. It offers a growing range of amenities and residential options.`,
+    amenities: { schools: [], hospitals: [], markets: [], parks: [], restaurants: [] }
+  };
+
+  localNeighborhoods.push(newNeighborhood);
+  try {
+    localStorage.setItem('homio_neighborhoods', JSON.stringify(localNeighborhoods));
+  } catch (e) {
+    console.warn("Failed to save neighborhoods to localStorage:", e);
+  }
+  
+  if (isConfigured && db) {
+    try {
+      const docRef = doc(db, 'neighborhoods', String(newNeighborhood.id));
+      await setDoc(docRef, newNeighborhood);
+      console.log("[DataService] Neighborhood written successfully to Firestore.");
+    } catch (error) {
+      console.error("[DataService] Error saving neighborhood to Firestore:", error);
+    }
+  }
+  
+  return newNeighborhood;
 };
 
 /**

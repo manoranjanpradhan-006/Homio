@@ -228,7 +228,7 @@ export const properties = [
     description: "Elegant builder floor in the heart of Chandrasekharpur. Wide roads, excellent connectivity, premium schools nearby.",
     amenities: ["Power Backup", "Car Parking", "Security", "CCTV"],
     lat: 20.2961, lng: 85.8245,
-    isFeatured: false,
+    isFeatured: true,
     isNew: true,
   },
   {
@@ -289,7 +289,7 @@ export const properties = [
     description: "Premium 3 BHK villa in Chandrasekharpur with private garden, modular kitchen, and premium fittings. An excellent investment opportunity.",
     amenities: ["Private Garden", "Modular Kitchen", "CCTV", "Power Backup", "2 Car Parking"],
     lat: 20.2961, lng: 85.8265,
-    isFeatured: false,
+    isFeatured: true,
     isNew: false,
   },
   {
@@ -319,7 +319,7 @@ export const properties = [
     description: "Cozy fully furnished studio apartment perfect for working professionals in Patia. High-speed internet included.",
     amenities: ["High-Speed WiFi", "Lift", "Security", "Housekeeping"],
     lat: 20.3512, lng: 85.8135,
-    isFeatured: false,
+    isFeatured: true,
     isNew: true,
   },
   {
@@ -349,7 +349,7 @@ export const properties = [
     description: "Ultra-premium 4 BHK in the most sought-after Chandrasekharpur. Smart home features, sky-lounge access, and concierge services.",
     amenities: ["Smart Home", "Sky Lounge", "Concierge", "Gym", "Pool", "Theatre"],
     lat: 20.2981, lng: 85.8285,
-    isFeatured: false,
+    isFeatured: true,
     isNew: false,
   },
   {
@@ -378,7 +378,7 @@ export const properties = [
     description: "Budget-friendly 2 BHK in Khandagiri with great view of the hills. Quiet, clean neighborhood with good air quality.",
     amenities: ["Car Parking", "Power Backup", "Security"],
     lat: 20.2743, lng: 85.7879,
-    isFeatured: false,
+    isFeatured: true,
     isNew: true,
   },
 ];

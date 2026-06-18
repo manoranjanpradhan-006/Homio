@@ -45,8 +45,7 @@ export default function SearchResults() {
     return list;
   }, [filters, sort, properties]);
 
-  const totalPages = Math.ceil(filtered.length / PER_PAGE);
-  const paginated = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE);
+  const paginated = filtered;
 
   const FilterSidebar = () => (
     <aside className="filter-sidebar">
@@ -148,7 +147,7 @@ export default function SearchResults() {
   );
 
   return (
-    <div className="page-wrapper">
+    <div className="page-wrapper search-page-wrapper">
       <div className="search-page">
         {/* Mobile Filter Toggle */}
         <div className="mobile-filter-bar">
@@ -202,7 +201,7 @@ export default function SearchResults() {
           {/* Results Grid */}
           <motion.div
             className="results-grid"
-            key={`${JSON.stringify(filters)}-${sort}-${page}`}
+            key={`${JSON.stringify(filters)}-${sort}`}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.25 }}
@@ -216,25 +215,9 @@ export default function SearchResults() {
             )}
           </motion.div>
 
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="pagination-wrap">
-              <div className="pagination">
-                <button className="page-btn" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>
-                  <ChevronLeft size={16} />
-                </button>
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
-                  <button key={p} className={`page-btn ${page === p ? 'active' : ''}`} onClick={() => setPage(p)}>{p}</button>
-                ))}
-                <button className="page-btn" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}>
-                  <ChevronRight size={16} />
-                </button>
-              </div>
-            </div>
-          )}
+          <Footer />
         </main>
       </div>
-      <Footer />
     </div>
   );
 }

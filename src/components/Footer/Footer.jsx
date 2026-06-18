@@ -25,7 +25,7 @@ export default function Footer() {
             <ul>
               <li><Link to="/search">Search Homes</Link></li>
               <li><Link to="/map">Interactive Map</Link></li>
-              <li><Link to="/neighborhoods/1">Neighborhoods</Link></li>
+              <li><Link to="/neighborhoods">Neighborhoods</Link></li>
               <li><Link to="/compare">Compare Areas</Link></li>
               <li><Link to="/reviews/1">Reviews</Link></li>
             </ul>
